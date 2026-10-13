@@ -1,45 +1,67 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import './global.css';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import React from 'react';
 import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+  StatusBar,
+} from 'react-native';
+import {
+  NavigationContainer,
+} from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+import { TownsProvider, useTowns } from './src/context/TownsContext';
+import { WeatherProvider } from './src/context/WeatherContext';
+import { TownsScreen } from './src/screens/TownsScreen';
+import { TownDetailsScreen } from './src/screens/TownDetailsScreen';
+
+import type { RootStackParamList } from './src/navigation/types';
+import { LoadingScreen } from './src/components/layout/LoadingScreen';
+const Stack =
+  createNativeStackNavigator<RootStackParamList>();
+
+export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <TownsProvider>
+        <WeatherProvider>
+          <StatusBar barStyle="dark-content" />
+
+          <AppContent />
+        </WeatherProvider>
+      </TownsProvider>
     </SafeAreaProvider>
   );
 }
 
 function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
+  const {
+    isLoading: townsLoading,
+  } = useTowns();
+
+  if (townsLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      >
+        <Stack.Screen
+          name="Towns"
+          component={TownsScreen}
+        />
+
+        <Stack.Screen
+          name="TownDetails"
+          component={TownDetailsScreen}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
-
-export default App;

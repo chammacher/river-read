@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:scaleX="0.78"
+        android:scaleY="0.78"
+        android:translateX="15"
+        android:translateY="15">
+
+        <!-- Crosshairs -->
+        <path
+            android:pathData="M50,8 L50,92"
+            android:strokeColor="#73052215"
+            android:strokeWidth="0.8"
+            android:fillColor="#00000000" />
+
+        <path
+            android:pathData="M8,50 L92,50"
+            android:strokeColor="#73052215"
+            android:strokeWidth="0.8"
+            android:fillColor="#00000000" />
+
+        <!-- Main River -->
+        <path
+            android:pathData="M18,68 C30,65 32,54 46,56 C60,58 64,42 82,38"
+            android:strokeColor="#406840"
+            android:strokeWidth="2.2"
+            android:strokeLineCap="round"
+            android:fillColor="#00000000" />
+
+        <!-- River Contours -->
+        <path
+            android:pathData="M16,61 C28,58 30,47 44,49 C58,51 62,35 80,31"
+            android:strokeColor="#59052215"
+            android:strokeWidth="1"
+            android:fillColor="#00000000" />
+
+        <path
+            android:pathData="M20,75 C32,72 34,61 48,63 C62,65 66,49 84,45"
+            android:strokeColor="#4D052215"
+            android:strokeWidth="1"
+            android:fillColor="#00000000" />
+
+        <!-- Mountains -->
+        <path
+            android:pathData="M30,38 L40,24 L52,38"
+            android:strokeColor="#B3052215"
+            android:strokeWidth="1.5"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+
+        <path
+            android:pathData="M48,38 L57,28 L68,40"
+            android:strokeColor="#B3052215"
+            android:strokeWidth="1.5"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Outer topographic ring -->
+        <path
+            android:pathData="
+        M88,50
+        C88,70.99 70.99,88 50,88
+        C29.01,88 12,70.99 12,50
+        C12,29.01 29.01,12 50,12
+        C70.99,12 88,29.01 88,50 Z"
+            android:strokeColor="#40052215"
+            android:strokeWidth="0.9"
+            android:fillColor="#00000000" />
+
+        <!-- Compass ring -->
+        <path
+            android:pathData="
+        M58,50
+        C58,54.42 54.42,58 50,58
+        C45.58,58 42,54.42 42,50
+        C42,45.58 45.58,42 50,42
+        C54.42,42 58,45.58 58,50 Z"
+            android:strokeColor="#381200"
+            android:strokeWidth="0.9"
+            android:fillColor="#00000000" />
+        <!-- Compass center -->
+        <path
+            android:pathData="M46,50 C46,47.8 47.8,46 50,46 C52.2,46 54,47.8 54,50 C54,52.2 52.2,54 50,54 C47.8,54 46,52.2 46,50 Z"
+            android:fillColor="#381200" />
+
+        <path
+            android:pathData="M48.6,50 C48.6,49.2 49.2,48.6 50,48.6 C50.8,48.6 51.4,49.2 51.4,50 C51.4,50.8 50.8,51.4 50,51.4 C49.2,51.4 48.6,50.8 48.6,50 Z"
+            android:fillColor="#FCF9F2" />
+
+    </group>
+
+</vector>

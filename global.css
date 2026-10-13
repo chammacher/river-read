@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-surface: 252 249 242;
+  --color-surface-container: 240 238 231;
+  --color-surface-container-low: 247 244 237;
+
+  --color-on-surface: 28 32 29;
+  --color-on-surface-variant: 68 73 68;
+
+  --color-primary: 24 57 43;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: 18 23 19;
+    --color-surface-container: 29 35 30;
+    --color-surface-container-low: 23 29 24;
+
+    --color-on-surface: 227 233 227;
+    --color-on-surface-variant: 174 184 175;
+
+    --color-primary: 193 238 188;
+  }
+}
