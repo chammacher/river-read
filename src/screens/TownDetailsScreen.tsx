@@ -19,20 +19,25 @@ import {
 } from '@material-symbols-svg/react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 type TownDetailsRouteProp = RouteProp<RootStackParamList, 'TownDetails'>;
+type TownDetailsNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'TownDetails'
+>;
 
 import { stateCodes } from '../types/states';
 import {
   formatCoordinate,
   getScoreColor,
-  getWeatherAgeMinutes
+  getWeatherAgeMinutes,
 } from '../functions/func';
 import {
-    clarityPhrase,
-    getCloudCoverage,
-    cloudCoveragePhrase
-    } from '../functions/weatherFunc';
+  clarityPhrase,
+  getCloudCoverage,
+  cloudCoveragePhrase,
+} from '../functions/weatherFunc';
 import { Header } from '../components/layout/Header';
 import { useTowns } from '../context/TownsContext';
 import { useWeather } from '../context/WeatherContext';
@@ -41,56 +46,50 @@ import { PatternCard } from '../components/ui/PatternCard';
 import { BiteWindowCard } from '../components/ui/BiteWindowCard';
 import { PressureGraph } from '../components/ui/PressureGraph';
 import { DetailsSectionHeader } from '../components/ui/DetailsSectionHeader';
-import { selectedPatternSuggestions } from '../types/patternSuggestions';
 
 export function TownDetailsScreen() {
   const route = useRoute<TownDetailsRouteProp>();
-  const navigation = useNavigation<TownDetailsRouteProp>();
+  const navigation = useNavigation<TownDetailsNavigationProp>();
 
   const { townId } = route.params;
   const { getTown, removeTown } = useTowns();
   const { getWeather, refreshWeather, isRefreshing } = useWeather();
 
-const weather =
-  getWeather(
-    townId,
-  );
-if (!weather) {
-  return (
-    <SafeAreaView className="flex-1 bg-surface">
-      <View className="flex-1 items-center justify-center px-gutter">
-        <Text className="font-headline-sm text-headline-sm font-semibold text-primary">
-          Weather Unavailable
-        </Text>
+  const weather = getWeather(townId);
+  if (!weather) {
+    return (
+      <SafeAreaView className="flex-1 bg-surface">
+        <View className="flex-1 items-center justify-center px-gutter">
+          <Text className="font-headline-sm text-headline-sm font-semibold text-primary">
+            Weather Unavailable
+          </Text>
 
-        <Text className="mt-space-sm text-center font-telemetry text-[11px] text-on-surface-variant">
-          No weather data has been saved for this location yet.
-          Connect to the internet and refresh to load current conditions.
-        </Text>
-      </View>
-    </SafeAreaView>
-  );
-}
+          <Text className="mt-space-sm text-center font-telemetry text-[11px] text-on-surface-variant">
+            No weather data has been saved for this location yet. Connect to the
+            internet and refresh to load current conditions.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
   const town = getTown(townId);
+  // If the town is not found, return null or handle the error appropriately
+  if (!town) {
+    return null;
+  }
   const dailyWeather = weather?.data?.daily[weather.data.daily.length / 2];
   const currentWeather = weather.data?.current;
   const hourlyWeather = weather.data?.hourly;
   const waterTempPercent = (
-      ((currentWeather.waterTemp - 40) / 30) *
-      100
-    ).toFixed(0);
-    
-    const scoreColor = getScoreColor(currentWeather.score.total);
-    const cloudCoverage =
-      getCloudCoverage(
-        currentWeather.cloudCover,
-      );
+    ((currentWeather.waterTemp - 40) / 30) *
+    100
+  ).toFixed(0);
 
-    const cloudPhrase =
-      cloudCoveragePhrase[
-        cloudCoverage
-      ];
-      console.log(currentWeather);
+  const scoreColor = getScoreColor(currentWeather.score.total);
+  const cloudCoverage = getCloudCoverage(currentWeather.cloudCover);
+
+  const cloudPhrase = cloudCoveragePhrase[cloudCoverage];
+
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'bottom']}>
       <View className="flex-1 bg-surface">
@@ -102,19 +101,19 @@ if (!weather) {
           }}
           onBack={() => navigation.navigate('Towns')}
         >
-        <View className="mb-space-xs flex-1 flex-row items-start justify-between gap-space-sm pb-5">
-                        <View className="min-w-0 flex-1">
-                          <Text className="font-headline-md text-headline-md tracking-tight text-primary">
-                            {town.name}, {stateCodes[town.state]}
-                          </Text>
+          <View className="mb-space-xs flex-1 flex-row items-start justify-between gap-space-sm pb-5">
+            <View className="min-w-0 flex-1">
+              <Text className="font-headline-md text-headline-md tracking-tight text-primary">
+                {town.name}, {stateCodes[town.state]}
+              </Text>
 
-                          <Text className="mt-0.5 font-telemetry text-telemetry text-on-surface-variant">
-                            Elev. {town.elevation} ft •{' '}
-                            {formatCoordinate(town.latitude, 'latitude')}{' '}
-                            {formatCoordinate(town.longitude, 'longitude')}
-                          </Text>
-                        </View>
-                      </View>
+              <Text className="mt-0.5 font-telemetry text-telemetry text-on-surface-variant">
+                Elev. {town.elevation} ft •{' '}
+                {formatCoordinate(town.latitude, 'latitude')}{' '}
+                {formatCoordinate(town.longitude, 'longitude')}
+              </Text>
+            </View>
+          </View>
         </Header>
 
         <ScrollView
@@ -122,29 +121,21 @@ if (!weather) {
           showsVerticalScrollIndicator={false}
           contentContainerClassName="pb-10"
           refreshControl={
-              <RefreshControl
-                refreshing={
-                  isRefreshing
-                }
-                onRefresh={() =>
-                  refreshWeather(
-                    true
-                  )
-                }
-              />
-            }
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => refreshWeather(true)}
+            />
+          }
         >
           {/* Station summary */}
           <View className="px-margin-mobile pt-space-md">
             <View className="rounded-xl bg-surface-container-low p-space-md shadow-sm">
-
-
               <View className="mt-space-sm flex-row items-center gap-space-xs rounded-lg bg-surface-container-lowest/60 p-2">
                 <Update size={18} color="#052215" />
 
                 <Text className="flex-1 font-body-sm text-body-sm text-on-surface-variant">
-                  Synchronized {getWeatherAgeMinutes(weather.lastUpdated)}m ago • Municipal Weather & Open-Meteo Best
-                  Match
+                  Synchronized {getWeatherAgeMinutes(weather.lastUpdated)}m ago
+                  • Municipal Weather & Open-Meteo Best Match
                 </Text>
               </View>
 
@@ -163,7 +154,6 @@ if (!weather) {
                     className="flex-row items-center gap-1 rounded-full border px-2.5 py-1"
                     style={{
                       backgroundColor: scoreColor.bgColor,
-                      color: scoreColor.textColor,
                       borderColor: scoreColor.outline,
                     }}
                   >
@@ -235,12 +225,14 @@ if (!weather) {
               <MetricCard
                 label="Clarity & Flow"
                 footer={'River ' + clarityPhrase[currentWeather.clarity.river]}
-                secondFooter={'Headwater ' + clarityPhrase[currentWeather.clarity.headwater]}
+                secondFooter={
+                  'Headwater ' + clarityPhrase[currentWeather.clarity.headwater]
+                }
                 icon={Water}
                 statusAccent
               />
 
-            {/* Sky */}
+              {/* Sky */}
               <MetricCard
                 label="Sky Condition"
                 value={`${currentWeather.cloudCover}% Coverage`}
@@ -264,16 +256,10 @@ if (!weather) {
                 </Text>
               </View>
 
-
               <PressureGraph
                 hourly={hourlyWeather}
-                currentTime={
-                  currentWeather.time
-                }
-                baselinePressure={
-                  currentWeather.pressure
-                    .baseline.average
-                }
+                currentTime={currentWeather.time}
+                baselinePressure={currentWeather.pressure.baseline}
               />
             </View>
 
@@ -291,13 +277,13 @@ if (!weather) {
 
               <View className="flex-row flex-wrap items-center gap-2 rounded bg-surface-container p-space-sm">
                 <Text className="font-telemetry text-telemetry text-primary">
-                  {currentWeather.last24Hours} in / past 24h
+                  {currentWeather.last24Hours.toFixed(2)} in / past 24h
                 </Text>
 
                 <Text className="text-on-surface-variant">•</Text>
 
                 <Text className="font-telemetry text-telemetry text-primary">
-                  {currentWeather.next48Hours} in / next 48h
+                  {currentWeather.next48Hours.toFixed(2)} in / next 48h
                 </Text>
               </View>
             </View>
@@ -326,7 +312,7 @@ if (!weather) {
                   </Text>
 
                   <Text className="font-telemetry text-telemetry text-secondary">
-                    Safe Margin ({currentWeather.waterTemp.toFixed(0) - 70}°F)
+                    Safe Margin ({(currentWeather.waterTemp - 70).toFixed(0)}°F)
                   </Text>
                 </View>
 
@@ -364,10 +350,9 @@ if (!weather) {
               meta=""
               icon={PestControl}
             />
-            {/** TODO pattern decision tree */}
             <View className="gap-space-sm">
               {currentWeather.flyRecommendations.slice(0, 3).map(pattern => (
-                <PatternCard key={pattern.id} recommendation={pattern} />
+                <PatternCard key={pattern.pattern.id} recommendation={pattern} />
               ))}
             </View>
           </View>

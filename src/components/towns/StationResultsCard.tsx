@@ -4,7 +4,6 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Station } from '../../types/station';
-import { getScoreColor } from '../../functions/func';
 import { stateCodes } from '../../types/states';
 
 interface StationResultCardProps {
@@ -18,7 +17,6 @@ export function StationResultCard({
   featured = false,
   onAdd,
 }: StationResultCardProps) {
-  const scoreColor = getScoreColor(station.score);
   return (
     <View
       className={

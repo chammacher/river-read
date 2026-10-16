@@ -17,7 +17,6 @@ export interface FieldNote {
 export interface FieldNotes {
   emptyNote: FieldNote;
   listNote: FieldNote;
-  detailsNote: FieldNote;
   addNote: FieldNote;
 }
 
@@ -31,11 +30,6 @@ export const fieldNotes: FieldNotes = {
     icon: HistoryEdu,
     title: 'Field Register Guide',
     description: `Tap any town station above for local barometric drift, hatch tables, thermal notes, and verified pocket water markers.`,
-  },
-  detailsNote: {
-    icon: '',
-    title: '',
-    description: '',
   },
   addNote: {
     icon: EditNote,

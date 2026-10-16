@@ -12,10 +12,7 @@ import {
   Waves,
 } from '@material-symbols-svg/react-native';
 
-import type {
-  FlyCategory,
-  FlyRecommendation,
-} from '../../types/fly';
+import type { FlyCategory, FlyRecommendation } from '../../types/fly';
 
 interface PatternCardProps {
   recommendation: FlyRecommendation;
@@ -32,50 +29,26 @@ const patternIcons = {
   attractorNymph: Grain,
   worm: Waves,
   streamer: Waves,
-} satisfies Record<
-  FlyCategory,
-  React.ComponentType<any>
->;
+} satisfies Record<FlyCategory, React.ComponentType<any>>;
 
-export function PatternCard({
-  recommendation,
-}: PatternCardProps) {
-  const {
-    pattern,
-    score,
-    suggestedColor,
-    reasons,
-  } = recommendation;
+export function PatternCard({ recommendation }: PatternCardProps) {
+  const { pattern, score, suggestedColor, reasons } = recommendation;
 
-  const Icon =
-    patternIcons[
-      pattern.category
-    ];
+  const Icon = patternIcons[pattern.category];
 
   const sizeLabel =
     pattern.sizes.length > 1
-      ? `#${pattern.sizes[0]}–${
-          pattern.sizes[
-            pattern.sizes.length - 1
-          ]
-        }`
+      ? `#${pattern.sizes[0]}–${pattern.sizes[pattern.sizes.length - 1]}`
       : `#${pattern.sizes[0]}`;
+  const colorLabel = formatLabel(suggestedColor.join(", "));
 
-  const colorLabel =
-    formatLabel(suggestedColor);
-
-  const reason =
-    reasons[0] ??
-    pattern.description;
+  const reason = reasons[0] ?? pattern.description;
 
   return (
     <View className="flex-row items-center justify-between rounded-xl bg-surface-container-low p-4 shadow-sm">
       <View className="min-w-0 flex-1 flex-row items-center gap-4">
         <View className="h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-container">
-          <Icon
-            size={26}
-            color="#052215"
-          />
+          <Icon size={26} color="#052215" />
         </View>
 
         <View className="min-w-0 flex-1">
@@ -94,18 +67,13 @@ export function PatternCard({
             </View>
           </View>
 
-          <Text
-            numberOfLines={1}
-            className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant"
-          >
+          <Text className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">
             {reason}
           </Text>
 
           <View className="mt-1 flex-row items-center gap-2">
             <Text className="font-telemetry text-[11px] uppercase tracking-wider text-secondary">
-              {formatLabel(
-                pattern.type,
-              )}
+              {formatLabel(pattern.type)}
             </Text>
 
             <Text className="font-telemetry text-[11px] text-on-surface-variant">
@@ -132,9 +100,7 @@ export function PatternCard({
   );
 }
 
-function getScoreLabel(
-  score: number,
-): string {
+function getScoreLabel(score: number): string {
   if (score >= 10) {
     return 'Top Pick';
   }
@@ -150,17 +116,8 @@ function getScoreLabel(
   return 'Situational';
 }
 
-function formatLabel(
-  value: string,
-): string {
+function formatLabel(value: string): string {
   return value
-    .replace(
-      /([a-z])([A-Z])/g,
-      '$1 $2',
-    )
-    .replace(
-      /^./,
-      char =>
-        char.toUpperCase(),
-    );
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, char => char.toUpperCase());
 }

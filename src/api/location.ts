@@ -2,18 +2,21 @@
 
 import type { Station } from '../types/station';
 
-interface OpenMeteoGeocodingResponse {
-  results?: Array<{
-    id: number;
+export interface OpenMeteoGeocodingResponse {
+  results?: LocationSearchResult[];
+}
+
+export interface LocationSearchResult {
+    id: string;
     name: string;
     latitude: number;
     longitude: number;
     country_code: string;
-    admin1?: string;
-    country?: string;
-    elevation?: number;
-    timezone?: string;
-  }>;
+    admin1: string;
+    admin2: string;
+    country: string;
+    elevation: number;
+    timezone: string;
 }
 
 export async function searchLocations(query: string): Promise<Station[]> {
@@ -40,7 +43,6 @@ export async function searchLocations(query: string): Promise<Station[]> {
   }
 
   const data: OpenMeteoGeocodingResponse = await response.json();
-  console.log(data.results);
   return (data.results ?? []).map(location => ({
     id: location.id,
     name: location.name,

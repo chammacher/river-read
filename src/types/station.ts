@@ -5,13 +5,14 @@ export interface Station {
   longitude: number;
   countryCode: string;
   country?: string;
-  state?: string;
+  state: string;
   region: string;
   county: string;
   reach?: string;
   status: string;
   elevation: number;
   hatch?: string;
+  stationName?: string;
 }
 
 export interface StationDetails extends Station {

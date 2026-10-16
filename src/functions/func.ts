@@ -1,7 +1,7 @@
 interface ScoreColor {
-    bgColor: string;
-    textColor: string;
-    outline: string;
+  bgColor: string;
+  textColor: string;
+  outline: string;
 }
 
 export function getScoreColor(score: number): ScoreColor {
@@ -111,34 +111,23 @@ export function getDecimalHour(dateTime: string): number {
   return hours + minutes / 60;
 }
 
-export function formatDecimalHour(
-  decimalHour: number,
-): string {
+export function formatDecimalHour(decimalHour: number): string {
   let hour = Math.floor(decimalHour);
 
-  let minutes = Math.round(
-    (decimalHour - hour) * 60,
-  );
+  let minutes = Math.round((decimalHour - hour) * 60);
 
   if (minutes === 60) {
     hour += 1;
     minutes = 0;
   }
 
-  const normalizedHour =
-    hour % 24;
+  const normalizedHour = hour % 24;
 
-  const suffix =
-    normalizedHour >= 12
-      ? 'PM'
-      : 'AM';
+  const suffix = normalizedHour >= 12 ? 'PM' : 'AM';
 
-  const displayHour =
-    normalizedHour % 12 || 12;
+  const displayHour = normalizedHour % 12 || 12;
 
-  return `${displayHour}:${minutes
-    .toString()
-    .padStart(2, '0')} ${suffix}`;
+  return `${displayHour}:${minutes.toString().padStart(2, '0')} ${suffix}`;
 }
 
 export function formatDateTimeTime(dateTime: string): string {

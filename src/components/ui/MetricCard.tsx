@@ -35,19 +35,23 @@ export function MetricCard({
         <Icon size={18} color="#406840" />
       </View>
 
-      {!status && !value ? '' : <View className="my-2">
-        <Text className="font-headline-md text-headline-md font-semibold text-primary">
-          {value}
-        </Text>
+      {!status && !value ? (
+        ''
+      ) : (
+        <View className="my-2">
+          <Text className="font-headline-md text-headline-md font-semibold text-primary">
+            {value}
+          </Text>
 
-        <Text
-          className={`mt-0.5 font-telemetry text-[11px] ${
-            statusAccent ? 'text-secondary' : 'text-on-surface-variant'
-          }`}
-        >
-          {status}
-        </Text>
-      </View>}
+          <Text
+            className={`mt-0.5 font-telemetry text-[11px] ${
+              statusAccent ? 'text-secondary' : 'text-on-surface-variant'
+            }`}
+          >
+            {status}
+          </Text>
+        </View>
+      )}
 
       {footer && (
         <View className="rounded bg-surface-container p-1.5">
@@ -56,13 +60,13 @@ export function MetricCard({
           </Text>
         </View>
       )}
-  {secondFooter && (
-          <View className="rounded bg-surface-container p-1.5">
-            <Text className="font-body-sm text-[11px] leading-tight text-on-surface-variant">
-              {secondFooter}
-            </Text>
-          </View>
-        )}
+      {secondFooter && (
+        <View className="rounded bg-surface-container p-1.5">
+          <Text className="font-body-sm text-[11px] leading-tight text-on-surface-variant">
+            {secondFooter}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

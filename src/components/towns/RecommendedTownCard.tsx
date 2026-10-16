@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function RecommendedTownCard({ town, isAdded, onToggle }: Props) {
-  const scoreColor = getScoreColor(town.score);
+  const scoreColor = getScoreColor(town.score || 0);
   return (
     <View className="flex-row items-center justify-between rounded-lg bg-surface-container-low p-4">
       <View className="mr-3 flex-1 flex-row items-start gap-3">

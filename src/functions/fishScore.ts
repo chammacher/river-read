@@ -1,9 +1,6 @@
 // src/functions/fishScore.ts
 
-import type {
-  PressurePhase,
-  WaterClarityType,
-} from '../types/weather';
+import type { PressurePhase, WaterClarityType } from '../types/weather';
 
 /*
  * =========================================================
@@ -125,12 +122,7 @@ export interface DailyFishingScore {
   clarity: number;
   cloudCover: number;
 
-  label:
-    | 'Excellent'
-    | 'Good'
-    | 'Fair'
-    | 'Poor'
-    | 'Very Poor';
+  label: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Very Poor';
 
   reasons: string[];
 }
@@ -146,26 +138,16 @@ export function calculateDailyFishingScore(
 ): DailyFishingScore {
   const reasons: string[] = [];
 
-  const pressure = getPressureScore(
-    conditions.pressurePhase,
+  const pressure = getPressureScore(conditions.pressurePhase, reasons);
+
+  const season = getSeasonScore(conditions.month, reasons);
+
+  const waterTemperature = getWaterTemperatureScore(
+    conditions.waterTemperature,
     reasons,
   );
 
-  const season = getSeasonScore(
-    conditions.month,
-    reasons,
-  );
-
-  const waterTemperature =
-    getWaterTemperatureScore(
-      conditions.waterTemperature,
-      reasons,
-    );
-
-  const clarity = getClarityScore(
-    conditions.clarity,
-    reasons,
-  );
+  const clarity = getClarityScore(conditions.clarity, reasons);
 
   const cloudCover = getCloudScore(
     conditions.cloudCover,
@@ -176,8 +158,7 @@ export function calculateDailyFishingScore(
   let total =
     pressure * SCORE_WEIGHTS.pressure +
     season * SCORE_WEIGHTS.season +
-    waterTemperature *
-      SCORE_WEIGHTS.waterTemperature +
+    waterTemperature * SCORE_WEIGHTS.waterTemperature +
     clarity * SCORE_WEIGHTS.clarity +
     cloudCover * SCORE_WEIGHTS.cloudCover;
 
@@ -185,32 +166,20 @@ export function calculateDailyFishingScore(
    * Hard caps prevent secondary conditions
    * from overpowering major limiting factors.
    */
-  if (conditions.waterTemperature &&
-    conditions.waterTemperature >=
-    WATER_TEMP.stressLimit
-  ) {
-    total = Math.min(
-      total,
-      SCORE_CAPS.warmWater,
-    );
-
-    reasons.push(
-      'Warm water significantly limits fishing quality',
-    );
-  }
-
   if (
-    conditions.pressurePhase ===
-    'establishedLow'
+    conditions.waterTemperature &&
+    conditions.waterTemperature >= WATER_TEMP.stressLimit
   ) {
-    total = Math.min(
-      total,
-      SCORE_CAPS.establishedLow,
-    );
+    total = Math.min(total, SCORE_CAPS.warmWater);
+
+    reasons.push('Warm water significantly limits fishing quality');
   }
 
-  const normalizedTotal =
-    roundScore(total / 10);
+  if (conditions.pressurePhase === 'establishedLow') {
+    total = Math.min(total, SCORE_CAPS.establishedLow);
+  }
+
+  const normalizedTotal = roundScore(total / 10);
 
   return {
     total: normalizedTotal,
@@ -221,10 +190,7 @@ export function calculateDailyFishingScore(
     clarity,
     cloudCover,
 
-    label:
-      getFishingScoreLabel(
-        normalizedTotal,
-      ),
+    label: getFishingScoreLabel(normalizedTotal),
 
     reasons,
   };
@@ -236,10 +202,7 @@ export function calculateDailyFishingScore(
  * =========================================================
  */
 
-function getPressureScore(
-  phase: PressurePhase,
-  reasons: string[],
-): number {
+function getPressureScore(phase: PressurePhase, reasons: string[]): number {
   switch (phase) {
     case 'rapidlyFalling':
       reasons.push(
@@ -248,27 +211,19 @@ function getPressureScore(
       break;
 
     case 'falling':
-      reasons.push(
-        'Approaching low pressure may improve short-term activity',
-      );
+      reasons.push('Approaching low pressure may improve short-term activity');
       break;
 
     case 'establishedLow':
-      reasons.push(
-        'Established low pressure may make fishing more difficult',
-      );
+      reasons.push('Established low pressure may make fishing more difficult');
       break;
 
     case 'stableHigh':
-      reasons.push(
-        'Stable high pressure provides consistent conditions',
-      );
+      reasons.push('Stable high pressure provides consistent conditions');
       break;
 
     case 'rising':
-      reasons.push(
-        'Rising pressure has a mostly neutral effect',
-      );
+      reasons.push('Rising pressure has a mostly neutral effect');
       break;
 
     case 'stable':
@@ -284,17 +239,12 @@ function getPressureScore(
  * =========================================================
  */
 
-function getSeasonScore(
-  month: number,
-  reasons: string[],
-): number {
+function getSeasonScore(month: number, reasons: string[]): number {
   /*
    * Spring
    */
   if (month >= 4 && month <= 6) {
-    reasons.push(
-      'Spring conditions are generally favorable',
-    );
+    reasons.push('Spring conditions are generally favorable');
 
     return SEASON_SCORES.spring;
   }
@@ -303,9 +253,7 @@ function getSeasonScore(
    * Summer
    */
   if (month >= 7 && month <= 8) {
-    reasons.push(
-      'Summer conditions depend heavily on water temperature',
-    );
+    reasons.push('Summer conditions depend heavily on water temperature');
 
     return SEASON_SCORES.summer;
   }
@@ -313,13 +261,8 @@ function getSeasonScore(
   /*
    * Fall
    */
-  if (
-    month >= 9 &&
-    month <= 10
-  ) {
-    reasons.push(
-      'Fall conditions are generally favorable',
-    );
+  if (month >= 9 && month <= 10) {
+    reasons.push('Fall conditions are generally favorable');
 
     return SEASON_SCORES.fall;
   }
@@ -327,9 +270,7 @@ function getSeasonScore(
   /*
    * Winter / late fall
    */
-  reasons.push(
-    'Cold-season conditions may reduce activity',
-  );
+  reasons.push('Cold-season conditions may reduce activity');
 
   return SEASON_SCORES.winter;
 }
@@ -347,51 +288,22 @@ function getWaterTemperatureScore(
   if (!waterTemp) {
     return 50;
   }
-  const distanceFromIdeal =
-    Math.abs(
-      waterTemp -
-        WATER_TEMP.ideal,
-    );
+  const distanceFromIdeal = Math.abs(waterTemp - WATER_TEMP.ideal);
 
-  let score =
-    100 -
-    distanceFromIdeal *
-      WATER_TEMP.scoreLossPerDegree;
+  let score = 100 - distanceFromIdeal * WATER_TEMP.scoreLossPerDegree;
 
-  score = clamp(
-    score,
-    0,
-    100,
-  );
+  score = clamp(score, 0, 100);
 
-  if (
-    waterTemp >=
-    WATER_TEMP.stressLimit
-  ) {
+  if (waterTemp >= WATER_TEMP.stressLimit) {
     score = 0;
-  } else if (
-    waterTemp >=
-    WATER_TEMP.warmPenaltyStart
-  ) {
-    score *=
-      WATER_TEMP.warmMultiplier;
-  } else if (
-    waterTemp <=
-    WATER_TEMP.coldPenaltyStart
-  ) {
-    score *=
-      WATER_TEMP.coldMultiplier;
+  } else if (waterTemp >= WATER_TEMP.warmPenaltyStart) {
+    score *= WATER_TEMP.warmMultiplier;
+  } else if (waterTemp <= WATER_TEMP.coldPenaltyStart) {
+    score *= WATER_TEMP.coldMultiplier;
   }
 
-  if (
-    waterTemp >=
-      WATER_TEMP.idealMin &&
-    waterTemp <=
-      WATER_TEMP.idealMax
-  ) {
-    reasons.push(
-      'Water temperature is in a strong trout feeding range',
-    );
+  if (waterTemp >= WATER_TEMP.idealMin && waterTemp <= WATER_TEMP.idealMax) {
+    reasons.push('Water temperature is in a strong trout feeding range');
   }
 
   return roundScore(score);
@@ -403,10 +315,7 @@ function getWaterTemperatureScore(
  * =========================================================
  */
 
-function getClarityScore(
-  clarity: WaterClarityType,
-  reasons: string[],
-): number {
+function getClarityScore(clarity: WaterClarityType, reasons: string[]): number {
   switch (clarity) {
     case 'slightlyStained':
       reasons.push(
@@ -415,27 +324,19 @@ function getClarityScore(
       break;
 
     case 'clear':
-      reasons.push(
-        'Clear water may make fish more cautious',
-      );
+      reasons.push('Clear water may make fish more cautious');
       break;
 
     case 'stained':
-      reasons.push(
-        'Reduced visibility may limit feeding efficiency',
-      );
+      reasons.push('Reduced visibility may limit feeding efficiency');
       break;
 
     case 'highlyStained':
-      reasons.push(
-        'Heavy stain significantly reduces visibility',
-      );
+      reasons.push('Heavy stain significantly reduces visibility');
       break;
   }
 
-  return CLARITY_SCORES[
-    clarity
-  ];
+  return CLARITY_SCORES[clarity];
 }
 
 /*
@@ -449,46 +350,23 @@ function getCloudScore(
   clarity: WaterClarityType,
   reasons: string[],
 ): number {
-  const normalizedCloudCover =
-    clamp(
-      cloudCover,
-      0,
-      100,
-    ) / 100;
+  const normalizedCloudCover = clamp(cloudCover, 0, 100) / 100;
 
-  const config =
-    CLOUD_SCORING[clarity];
+  const config = CLOUD_SCORING[clarity];
 
-  const score =
-    config.base +
-    normalizedCloudCover *
-      config.cloudBonus;
+  const score = config.base + normalizedCloudCover * config.cloudBonus;
 
-  if (
-    clarity === 'clear' &&
-    cloudCover >= 60
-  ) {
-    reasons.push(
-      'Cloud cover improves fish comfort in clear water',
-    );
+  if (clarity === 'clear' && cloudCover >= 60) {
+    reasons.push('Cloud cover improves fish comfort in clear water');
   }
 
-  if (
-    clarity === 'clear' &&
-    cloudCover <= 20
-  ) {
+  if (clarity === 'clear' && cloudCover <= 20) {
     reasons.push(
       'Bright conditions may make fish more cautious in clear water',
     );
   }
 
-  return roundScore(
-    clamp(
-      score,
-      0,
-      100,
-    ),
-  );
+  return roundScore(clamp(score, 0, 100));
 }
 
 /*
@@ -500,28 +378,19 @@ function getCloudScore(
 export function getFishingScoreLabel(
   score: number,
 ): DailyFishingScore['label'] {
-  if (
-    score >=
-    SCORE_LABELS.excellent
-  ) {
+  if (score >= SCORE_LABELS.excellent) {
     return 'Excellent';
   }
 
-  if (
-    score >= SCORE_LABELS.good
-  ) {
+  if (score >= SCORE_LABELS.good) {
     return 'Good';
   }
 
-  if (
-    score >= SCORE_LABELS.fair
-  ) {
+  if (score >= SCORE_LABELS.fair) {
     return 'Fair';
   }
 
-  if (
-    score >= SCORE_LABELS.poor
-  ) {
+  if (score >= SCORE_LABELS.poor) {
     return 'Poor';
   }
 
@@ -534,23 +403,10 @@ export function getFishingScoreLabel(
  * =========================================================
  */
 
-function clamp(
-  value: number,
-  min: number,
-  max: number,
-): number {
-  return Math.min(
-    max,
-    Math.max(min, value),
-  );
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
-function roundScore(
-  value: number,
-): number {
-  return (
-    Math.round(
-      value * 10,
-    ) / 10
-  );
+function roundScore(value: number): number {
+  return Math.round(value * 10) / 10;
 }

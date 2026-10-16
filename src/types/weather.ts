@@ -1,10 +1,10 @@
 // src/types/weather.ts
 
-import { DailyFishingScore } from "../functions/fishScore";
-import { FlyRecommendation } from "./fly";
+import { DailyFishingScore } from '../functions/fishScore';
+import { FlyRecommendation } from './fly';
 
 export interface CachedTownWeather {
-  data: TownWeatherMap;
+  data: TownWeather;
   lastUpdated: string;
 }
 
@@ -53,10 +53,10 @@ export interface PressureTrend {
 }
 
 export interface PrecipitationSummary {
-    last24Hours: number;
-    last7Days: number;
-    hoursSinceRain: number;
-    next48Hours: number;
+  last24Hours: number;
+  last7Days: number;
+  hoursSinceRain: number;
+  next48Hours: number;
 }
 
 export interface BiteWindow {
@@ -77,24 +77,12 @@ export interface BiteWindow {
 }
 
 export interface CurrentWeatherDerivation extends CurrentWeather {
-  recommendation: string;
 
   waterTemp: number;
-  waterTempRecommendation: string;
   waterTempMin: number;
   waterTempMax: number;
-
-  waterClarity: number;
   clarity: WaterClarity;
-  waterClarityRecommendation: string;
-
   pressure: PressureTrend;
-  cloudCoverRecommendation: string;
-
-  rainRecommendation: string;
-  rainStatus: string;
-  rainPrediction: number;
-
   last24Hours: number;
   last7Days: number;
   next48Hours: number;
@@ -103,8 +91,8 @@ export interface CurrentWeatherDerivation extends CurrentWeather {
 }
 
 export interface WaterClarity {
-    river: WaterClarityType;
-    headwater: WaterClarityType;
+  river: WaterClarityType;
+  headwater: WaterClarityType;
 }
 
 export interface DailyWeather {
@@ -119,7 +107,7 @@ export interface DailyWeather {
 }
 
 export interface TownWeather {
-  current: CurrentWeather;
+  current: CurrentWeatherDerivation;
   daily: DailyWeather[];
   hourly: HourlyWeather[];
 }

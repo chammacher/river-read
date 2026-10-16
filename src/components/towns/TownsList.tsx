@@ -1,23 +1,21 @@
-import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { fieldNotes } from '../../types/notes';
 import { Station } from '../../types/station';
 import { FieldNote } from './FieldNote';
 import { SelectedTownCard } from './SelectedTownCard';
 import { SeasonalFieldBanner } from '../ui/SeasonalFieldBanner';
-import type { TownWeatherMap } from '../types/weather';
+import { CachedTownWeatherMap } from '../../context/WeatherContext';
 
 interface TownsListProps {
   towns: Station[];
-  weather: TownWeatherMap;
+  weather: CachedTownWeatherMap;
   onRemove(townId: string): void;
   onPressTown(town: Station): void;
 }
 
 export function TownsList({
   towns,
-  onRemove,
   onPressTown,
   weather,
 }: TownsListProps) {

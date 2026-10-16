@@ -1,12 +1,10 @@
-import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { fieldNotes } from '../../types/notes';
 import { Station } from '../../types/station';
 import { EmptyTownsCard } from './EmptyTownsCard';
 import { FieldNote } from './FieldNote';
-import { RecommendedTownCard } from './RecommendedTownCard';
-import { recommendedTowns } from '../../types/recommendedTowns';
+// import { RecommendedTownCard } from './RecommendedTownCard';
 import { Explore } from '@material-symbols-svg/react-native';
 
 interface EmptyTownsStateProps {
@@ -30,14 +28,14 @@ export function EmptyTownsState({ onPress, onAddTown }: EmptyTownsStateProps) {
         </Text>
 
         <View className="gap-3">
-          {recommendedTowns.map(town => (
+          {/* {recommendedTowns.map(town => (
             <RecommendedTownCard
               key={town.id}
               town={town}
               isAdded={false}
               onToggle={onAddTown}
             />
-          ))}
+          ))} */}
         </View>
       </View>
 

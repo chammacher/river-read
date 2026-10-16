@@ -14,7 +14,7 @@ export function EmptyTownsCard({ onAddTown }: EmptyTownsCardProps) {
       </View>
 
       <Text className="mt-2 text-xl font-semibold text-primary">
-        Your Field Register is Empty
+        Your Town List is Empty
       </Text>
 
       <Text className="mt-2 max-w-xs text-center text-base text-on-surface-variant">

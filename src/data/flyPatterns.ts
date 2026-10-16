@@ -1,6 +1,4 @@
-import type {
-  FlyPattern,
-} from '../types/fly';
+import type { FlyPattern } from '../types/fly';
 
 export const flyPatterns: FlyPattern[] = [
   {
@@ -12,77 +10,45 @@ export const flyPatterns: FlyPattern[] = [
 
     type: 'dry',
 
-    sizes: [
-      '16',
-      '18',
-      '20',
-    ],
+    sizes: ['16', '18', '20'],
 
-    regions: [
-      'rockies',
-      'upperMidwest',
-      'northeast',
-      'appalachia',
-    ],
+    regions: ['rockies', 'upperMidwest', 'northeast', 'appalachia'],
+
+    seasons: ['earlySpring', 'lateSpring', 'earlyFall', 'lateFall'],
+
+    colors: ['natural', 'gray'] as any,
+
+    description: 'Versatile mayfly dry for rising trout.',
+  },
+
+  {
+    id: 'scud',
+
+    name: 'Scud',
+
+    category: 'scud',
+
+    type: 'nymph',
+
+    sizes: ['12', '14', '16', '18'],
+
+    regions: ['upperMidwest', 'rockies', 'northeast'],
 
     seasons: [
+      'winter',
       'earlySpring',
       'lateSpring',
+      'earlySummer',
+      'lateSummer',
       'earlyFall',
       'lateFall',
     ],
 
-    colors: [
-      'natural',
-      'gray',
-    ] as any,
+    colors: ['olive', 'natural', 'pink', 'orange'],
 
     description:
-      'Versatile mayfly dry for rising trout.',
+      'Reliable subsurface scud imitation for spring creeks and productive trout water.',
   },
-
-  {
-  id: 'scud',
-
-  name: 'Scud',
-
-  category: 'scud',
-
-  type: 'nymph',
-
-  sizes: [
-    '12',
-    '14',
-    '16',
-    '18',
-  ],
-
-  regions: [
-    'upperMidwest',
-    'rockies',
-    'northeast',
-  ],
-
-  seasons: [
-    'winter',
-    'earlySpring',
-    'lateSpring',
-    'earlySummer',
-    'lateSummer',
-    'earlyFall',
-    'lateFall',
-  ],
-
-  colors: [
-    'olive',
-    'natural',
-    'pink',
-    'orange',
-  ],
-
-  description:
-    'Reliable subsurface scud imitation for spring creeks and productive trout water.',
-},
 
   {
     id: 'zebra-midge',
@@ -93,11 +59,7 @@ export const flyPatterns: FlyPattern[] = [
 
     type: 'nymph',
 
-    sizes: [
-      '18',
-      '20',
-      '22',
-    ],
+    sizes: ['18', '20', '22'],
 
     regions: [
       'rockies',
@@ -107,19 +69,11 @@ export const flyPatterns: FlyPattern[] = [
       'appalachia',
     ],
 
-    seasons: [
-      'winter',
-      'earlySpring',
-      'lateFall',
-    ],
+    seasons: ['winter', 'earlySpring', 'lateFall'],
 
-    colors: [
-      'black',
-      'red',
-    ],
+    colors: ['black', 'red'],
 
-    description:
-      'Reliable midge larva or pupa imitation.',
+    description: 'Reliable midge larva or pupa imitation.',
   },
 
   {
@@ -131,11 +85,7 @@ export const flyPatterns: FlyPattern[] = [
 
     type: 'nymph',
 
-    sizes: [
-      '10',
-      '12',
-      '14',
-    ],
+    sizes: ['10', '12', '14'],
 
     regions: [
       'rockies',
@@ -155,14 +105,9 @@ export const flyPatterns: FlyPattern[] = [
       'lateFall',
     ],
 
-    colors: [
-      'pink',
-      'red',
-      'orange',
-    ],
+    colors: ['pink', 'red', 'orange'],
 
-    description:
-      'Strong runoff and stained-water pattern.',
+    description: 'Strong runoff and stained-water pattern.',
   },
 
   {
@@ -174,11 +119,7 @@ export const flyPatterns: FlyPattern[] = [
 
     type: 'nymph',
 
-    sizes: [
-      '10',
-      '12',
-      '14',
-    ],
+    sizes: ['10', '12', '14'],
 
     regions: [
       'rockies',
@@ -197,11 +138,7 @@ export const flyPatterns: FlyPattern[] = [
       'lateFall',
     ],
 
-    colors: [
-      'pink',
-      'red',
-      'orange',
-    ],
+    colors: ['pink', 'red', 'orange'],
 
     description:
       'High-visibility option after rain or during stained conditions.',
@@ -216,11 +153,7 @@ export const flyPatterns: FlyPattern[] = [
 
     type: 'streamer',
 
-    sizes: [
-      '6',
-      '8',
-      '10',
-    ],
+    sizes: ['6', '8', '10'],
 
     regions: [
       'rockies',
@@ -240,12 +173,7 @@ export const flyPatterns: FlyPattern[] = [
       'lateFall',
     ],
 
-    colors: [
-      'black',
-      'olive',
-      'brown',
-      'white',
-    ],
+    colors: ['black', 'olive', 'brown', 'white'],
 
     description:
       'General-purpose streamer for aggressive or opportunistic trout.',

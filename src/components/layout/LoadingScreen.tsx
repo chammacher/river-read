@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Text,
-  View,
-} from 'react-native';
+import { View } from 'react-native';
 import { FieldRegisterIcon } from '../icons/FieldRegisterIcon';
 
 export function LoadingScreen() {

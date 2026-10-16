@@ -1,7 +1,4 @@
-import type {
-  PressurePhase,
-  WaterClarityType,
-} from './weather';
+import type { PressurePhase, WaterClarityType } from './weather';
 
 export type FishingRegion =
   | 'rockies'
@@ -31,11 +28,7 @@ export type FlyCategory =
   | 'worm'
   | 'streamer';
 
-export type FlyType =
-  | 'dry'
-  | 'emerger'
-  | 'nymph'
-  | 'streamer';
+export type FlyType = 'dry' | 'emerger' | 'nymph' | 'streamer';
 
 export interface ColorScore {
   color: FlyColor;
@@ -77,7 +70,7 @@ export interface FlyRecommendationConditions {
   region: FishingRegion;
   season: FishingSeason;
 
-  waterTemperature: number | null;
+  waterTemperature: number;
 
   clarity: WaterClarityType;
 
@@ -91,10 +84,7 @@ export interface FlyRecommendationConditions {
 export interface ColorRecommendation {
   preferredColors: FlyColor[];
 
-  visibility:
-    | 'natural'
-    | 'moderate'
-    | 'high';
+  visibility: 'natural' | 'moderate' | 'high';
 
   reasons: string[];
 }
@@ -104,7 +94,7 @@ export interface FlyRecommendation {
 
   score: number;
 
-  suggestedColor: FlyColor;
+  suggestedColor: FlyColor[];
 
   reasons: string[];
 }

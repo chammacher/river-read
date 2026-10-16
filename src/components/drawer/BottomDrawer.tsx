@@ -1,6 +1,6 @@
 // src/components/drawer/BottomDrawer.tsx
 
-import React, { PropsWithChildren, useEffect, useMemo, useRef } from 'react';
+import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   Animated,
@@ -49,13 +49,13 @@ export function BottomDrawer({
     }).start();
   }, [visible, height, translateY]);
 
-  const closeDrawer = () => {
+  const closeDrawer = useCallback(() => {
     Animated.timing(translateY, {
       toValue: height,
       duration: 220,
       useNativeDriver: true,
     }).start(onClose);
-  };
+  }, [height, translateY, onClose]);
 
   const panResponder = useMemo(
     () =>
@@ -84,7 +84,7 @@ export function BottomDrawer({
           }).start();
         },
       }),
-    [height, translateY],
+    [closeDrawer, translateY],
   );
 
   return (

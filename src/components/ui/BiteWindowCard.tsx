@@ -6,7 +6,10 @@ import { Verified } from '@material-symbols-svg/react-native';
 import type { BiteWindow, HourlyWeather } from '../../types/weather';
 
 import { buildActivitySegments } from '../../functions/weatherFunc';
-import { formatHour, formatDateTimeTime, formatDecimalHour } from '../../functions/func';
+import {
+  formatDateTimeTime,
+  formatDecimalHour,
+} from '../../functions/func';
 
 interface BiteWindowCardProps {
   biteWindow: BiteWindow | null;

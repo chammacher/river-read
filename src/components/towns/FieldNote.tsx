@@ -1,3 +1,4 @@
+import { ComponentClass } from 'react';
 import { Text, View } from 'react-native';
 
 interface FieldNoteProps {
@@ -5,7 +6,7 @@ interface FieldNoteProps {
   children: React.ReactNode;
   reference?: string;
   source?: string;
-  icon?: string;
+  icon: ComponentClass<any, any> | React.FunctionComponent<any>;
 }
 
 export function FieldNote({

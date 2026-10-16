@@ -8,7 +8,7 @@ import { stateCodes } from '../../types/states';
 
 interface SelectedTownCardProps {
   town: Station;
-  weather: CachedTownWeather;
+  weather?: CachedTownWeather;
   onPress?: (town: Station) => void;
 }
 
@@ -17,7 +17,7 @@ export function SelectedTownCard({
   onPress,
   weather,
 }: SelectedTownCardProps) {
-  const scoreColor = getScoreColor(weather?.data.current.score.total);
+  const scoreColor = getScoreColor(weather?.data.current.score.total || 0);
   return (
     <Pressable
       onPress={() => onPress?.(town)}
@@ -48,7 +48,6 @@ export function SelectedTownCard({
           className="shrink-0 rounded-lg border px-3 py-1.5 shadow-sm"
           style={{
             backgroundColor: scoreColor.bgColor,
-            color: scoreColor.textColor,
             borderColor: scoreColor.outline,
           }}
         >
@@ -66,7 +65,8 @@ export function SelectedTownCard({
             </Text>
           </View>
 
-          <Text className="mt-0.5 text-center font-label-sm text-[10px] uppercase tracking-widest"
+          <Text
+            className="mt-0.5 text-center font-label-sm text-[10px] uppercase tracking-widest"
             style={{ color: scoreColor.textColor }}
           >
             {weather?.data.current.score.label}

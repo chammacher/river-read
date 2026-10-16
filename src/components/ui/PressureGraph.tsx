@@ -1,16 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import {
-  LayoutChangeEvent,
-  Text,
-  View,
-} from 'react-native';
-import Svg, {
-  Circle,
-  Line,
-  Path,
-} from 'react-native-svg';
+import { LayoutChangeEvent, Text, View } from 'react-native';
+import Svg, { Circle, Line, Path } from 'react-native-svg';
 
-import type { HourlyWeather } from '../../../types/weather';
+import type { HourlyWeather } from '../../types/weather';
 
 interface PressureGraphProps {
   hourly: HourlyWeather[];
@@ -27,126 +19,73 @@ export function PressureGraph({
   currentTime,
   baselinePressure,
 }: PressureGraphProps) {
-  const [graphWidth, setGraphWidth] =
-    useState(0);
+  const [graphWidth, setGraphWidth] = useState(0);
 
-  const currentDate =
-    currentTime.split('T')[0];
+  const currentDate = currentTime.split('T')[0];
 
   /*
    * Only graph today's pressure values.
    */
   const todayHourly = useMemo(
-    () =>
-      hourly.filter(hour =>
-        hour.time.startsWith(
-          currentDate,
-        ),
-      ),
+    () => hourly.filter(hour => hour.time.startsWith(currentDate)),
     [hourly, currentDate],
   );
 
   const graph = useMemo(() => {
-    if (
-      todayHourly.length === 0 ||
-      graphWidth === 0
-    ) {
+    if (todayHourly.length === 0 || graphWidth === 0) {
       return null;
     }
 
-    const pressures =
-      todayHourly.map(
-        hour => hour.pressure,
-      );
+    const pressures = todayHourly.map(hour => hour.pressure);
 
     /*
      * Include baseline in the visible
      * pressure range so the reference line
      * never falls outside the graph.
      */
-    const rawMin = Math.min(
-      ...pressures,
-      baselinePressure,
-    );
+    const rawMin = Math.min(...pressures, baselinePressure);
 
-    const rawMax = Math.max(
-      ...pressures,
-      baselinePressure,
-    );
+    const rawMax = Math.max(...pressures, baselinePressure);
 
     /*
      * Small amount of vertical padding makes
      * subtle pressure changes easier to see.
      */
-    const minPressure =
-      Math.floor(rawMin - 1);
+    const minPressure = Math.floor(rawMin - 1);
 
-    const maxPressure =
-      Math.ceil(rawMax + 1);
+    const maxPressure = Math.ceil(rawMax + 1);
 
-    const pressureRange =
-      maxPressure - minPressure || 1;
+    const pressureRange = maxPressure - minPressure || 1;
 
     const usableHeight =
-      GRAPH_HEIGHT -
-      GRAPH_PADDING_TOP -
-      GRAPH_PADDING_BOTTOM;
+      GRAPH_HEIGHT - GRAPH_PADDING_TOP - GRAPH_PADDING_BOTTOM;
 
-    const getX = (
-      index: number,
-    ) => {
-      if (
-        todayHourly.length === 1
-      ) {
+    const getX = (index: number) => {
+      if (todayHourly.length === 1) {
         return graphWidth / 2;
       }
 
-      return (
-        (index /
-          (todayHourly.length - 1)) *
-        graphWidth
-      );
+      return (index / (todayHourly.length - 1)) * graphWidth;
     };
 
-    const getY = (
-      pressure: number,
-    ) => {
-      const normalized =
-        (pressure - minPressure) /
-        pressureRange;
+    const getY = (pressure: number) => {
+      const normalized = (pressure - minPressure) / pressureRange;
 
-      return (
-        GRAPH_PADDING_TOP +
-        (1 - normalized) *
-          usableHeight
-      );
+      return GRAPH_PADDING_TOP + (1 - normalized) * usableHeight;
     };
 
     const path = todayHourly
       .map((hour, index) => {
         const x = getX(index);
-        const y = getY(
-          hour.pressure,
-        );
+        const y = getY(hour.pressure);
 
-        return `${
-          index === 0 ? 'M' : 'L'
-        } ${x} ${y}`;
+        return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
       })
       .join(' ');
 
-    const currentIndex =
-      todayHourly.findIndex(
-        hour =>
-          hour.time.substring(
-            0,
-            13,
-          ) ===
-          currentTime.substring(
-            0,
-            13,
-          ),
-      );
+    const currentIndex = todayHourly.findIndex(
+      hour => hour.time.substring(0, 13) === currentTime.substring(0, 13),
+    );
 
     return {
       minPressure,
@@ -155,22 +94,12 @@ export function PressureGraph({
       getY,
       path,
       currentIndex,
-      baselineY:
-        getY(baselinePressure),
+      baselineY: getY(baselinePressure),
     };
-  }, [
-    todayHourly,
-    graphWidth,
-    baselinePressure,
-    currentTime,
-  ]);
+  }, [todayHourly, graphWidth, baselinePressure, currentTime]);
 
-  function handleLayout(
-    event: LayoutChangeEvent,
-  ) {
-    setGraphWidth(
-      event.nativeEvent.layout.width,
-    );
+  function handleLayout(event: LayoutChangeEvent) {
+    setGraphWidth(event.nativeEvent.layout.width);
   }
 
   if (todayHourly.length === 0) {
@@ -184,22 +113,14 @@ export function PressureGraph({
         className="relative mt-space-xs h-[100px] w-full"
         onLayout={handleLayout}
       >
-        {graph &&
-        graphWidth > 0 ? (
-          <Svg
-            width={graphWidth}
-            height={GRAPH_HEIGHT}
-          >
+        {graph && graphWidth > 0 ? (
+          <Svg width={graphWidth} height={GRAPH_HEIGHT}>
             {/* Top guide */}
             <Line
               x1={0}
-              y1={
-                GRAPH_PADDING_TOP
-              }
+              y1={GRAPH_PADDING_TOP}
               x2={graphWidth}
-              y2={
-                GRAPH_PADDING_TOP
-              }
+              y2={GRAPH_PADDING_TOP}
               stroke="#00000020"
               strokeWidth={1}
             />
@@ -207,15 +128,9 @@ export function PressureGraph({
             {/* Bottom guide */}
             <Line
               x1={0}
-              y1={
-                GRAPH_HEIGHT -
-                GRAPH_PADDING_BOTTOM
-              }
+              y1={GRAPH_HEIGHT - GRAPH_PADDING_BOTTOM}
               x2={graphWidth}
-              y2={
-                GRAPH_HEIGHT -
-                GRAPH_PADDING_BOTTOM
-              }
+              y2={GRAPH_HEIGHT - GRAPH_PADDING_BOTTOM}
               stroke="#00000020"
               strokeWidth={1}
             />
@@ -223,13 +138,9 @@ export function PressureGraph({
             {/* 3-day baseline */}
             <Line
               x1={0}
-              y1={
-                graph.baselineY
-              }
+              y1={graph.baselineY}
               x2={graphWidth}
-              y2={
-                graph.baselineY
-              }
+              y2={graph.baselineY}
               stroke="#6B776B"
               strokeWidth={1}
               strokeDasharray="4 4"
@@ -246,35 +157,21 @@ export function PressureGraph({
             />
 
             {/* Current time */}
-            {graph.currentIndex >=
-              0 && (
+            {graph.currentIndex >= 0 && (
               <>
                 <Line
-                  x1={graph.getX(
-                    graph.currentIndex,
-                  )}
+                  x1={graph.getX(graph.currentIndex)}
                   y1={0}
-                  x2={graph.getX(
-                    graph.currentIndex,
-                  )}
-                  y2={
-                    GRAPH_HEIGHT
-                  }
+                  x2={graph.getX(graph.currentIndex)}
+                  y2={GRAPH_HEIGHT}
                   stroke="#83A98C"
                   strokeWidth={1}
                   strokeDasharray="3 4"
                 />
 
                 <Circle
-                  cx={graph.getX(
-                    graph.currentIndex,
-                  )}
-                  cy={graph.getY(
-                    todayHourly[
-                      graph
-                        .currentIndex
-                    ].pressure,
-                  )}
+                  cx={graph.getX(graph.currentIndex)}
+                  cy={graph.getY(todayHourly[graph.currentIndex].pressure)}
                   r={4}
                   fill="#18392B"
                 />
@@ -287,13 +184,11 @@ export function PressureGraph({
         {graph && (
           <>
             <Text className="absolute -top-1 right-0 font-telemetry text-[9px] text-on-surface-variant">
-              {graph.maxPressure}{' '}
-              hPa
+              {graph.maxPressure} hPa
             </Text>
 
             <Text className="absolute -bottom-1 right-0 font-telemetry text-[9px] text-on-surface-variant">
-              {graph.minPressure}{' '}
-              hPa
+              {graph.minPressure} hPa
             </Text>
           </>
         )}
@@ -333,10 +228,7 @@ export function PressureGraph({
         </View>
 
         <View className="flex-row items-center gap-1.5">
-          <Svg
-            width={18}
-            height={4}
-          >
+          <Svg width={18} height={4}>
             <Line
               x1={0}
               y1={2}

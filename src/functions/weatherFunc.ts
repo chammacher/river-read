@@ -1,12 +1,20 @@
-import { ActivityLevel, ActivitySegment } from '../components/ui/BiteWindowCard';
-import type { BiteWindow, HourlyWeather, PressureTrend, PressurePhase, WaterClarityType, DailyWeather, WaterClarity, PrecipitationSummary } from '../types/weather';
+import {
+  ActivityLevel,
+  ActivitySegment,
+} from '../components/ui/BiteWindowCard';
+import type {
+  BiteWindow,
+  HourlyWeather,
+  PressureTrend,
+  PressurePhase,
+  WaterClarityType,
+  DailyWeather,
+  WaterClarity,
+  PrecipitationSummary,
+} from '../types/weather';
 import { getDecimalHour } from './func';
 
-export function estimateWaterTemperature(dailyTemps: number[]): number | null {
-  if (!dailyTemps || dailyTemps.length < 7) {
-    return null;
-  }
-
+export function estimateWaterTemperature(dailyTemps: number[]): number {
   const recent = dailyTemps.slice(-7);
 
   const weights = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
@@ -97,14 +105,9 @@ export function calculateBiteScore(
    * as temperature moves away from that range.
    */
   const idealTemp = 57.5;
-  const distanceFromIdeal = Math.abs(
-    waterTemp - idealTemp,
-  );
+  const distanceFromIdeal = Math.abs(waterTemp - idealTemp);
 
-  score += Math.max(
-    0,
-    6 - distanceFromIdeal * 0.6,
-  );
+  score += Math.max(0, 6 - distanceFromIdeal * 0.6);
 
   /*
    * Temperature trend
@@ -113,10 +116,7 @@ export function calculateBiteScore(
    */
   if (waterTemp < 55) {
     if (threeHourChange > 0) {
-      score += Math.min(
-        threeHourChange * 1.5,
-        4,
-      );
+      score += Math.min(threeHourChange * 1.5, 4);
     } else {
       score += threeHourChange * 0.5;
     }
@@ -128,14 +128,8 @@ export function calculateBiteScore(
    * want rapid warming to overpower the
    * already-good temperature.
    */
-  if (
-    waterTemp >= 55 &&
-    waterTemp <= 62
-  ) {
-    if (
-      threeHourChange > 0 &&
-      threeHourChange <= 2
-    ) {
+  if (waterTemp >= 55 && waterTemp <= 62) {
+    if (threeHourChange > 0 && threeHourChange <= 2) {
       score += threeHourChange * 0.75;
     }
 
@@ -149,10 +143,7 @@ export function calculateBiteScore(
    */
   if (waterTemp > 62) {
     if (threeHourChange < 0) {
-      score += Math.min(
-        Math.abs(threeHourChange) * 1.25,
-        3,
-      );
+      score += Math.min(Math.abs(threeHourChange) * 1.25, 3);
     }
 
     if (threeHourChange > 0) {
@@ -171,33 +162,24 @@ export function calculateBiteScore(
   if (waterTemp >= 70) {
     score -= 4;
   }
-  return Math.max(
-    0,
-    Math.round(score * 10) / 10,
-  );
+  return Math.max(0, Math.round(score * 10) / 10);
 }
 
 export function findOptimalBiteWindow(
   hours: HourlyWeather[],
   sunrise: string,
-  sunset: string
+  sunset: string,
 ): BiteWindow | null {
-    const sunriseHour =
-        getDecimalHour(sunrise);
+  const sunriseHour = getDecimalHour(sunrise);
 
-      const sunsetHour =
-        getDecimalHour(sunset);
+  const sunsetHour = getDecimalHour(sunset);
   if (hours.length === 0) {
     return null;
   }
 
-const daylightHours =
-    hours.filter(hour => {
-      return (
-        hour.hour >= sunriseHour &&
-        hour.hour < sunsetHour
-      );
-    });
+  const daylightHours = hours.filter(hour => {
+    return hour.hour >= sunriseHour && hour.hour < sunsetHour;
+  });
 
   if (daylightHours.length === 0) {
     return null;
@@ -213,7 +195,8 @@ const daylightHours =
 
   for (let i = 0; i <= daylightHours.length; i++) {
     const qualifies =
-      i < daylightHours.length && daylightHours[i].biteScore >= minimumGoodScore;
+      i < daylightHours.length &&
+      daylightHours[i].biteScore >= minimumGoodScore;
 
     if (qualifies && currentStart === -1) {
       currentStart = i;
@@ -283,14 +266,8 @@ const daylightHours =
     }
   }
 
-  const startHour = Math.max(
-    daylightHours[bestStart].hour,
-    sunriseHour,
-  );
-  const endHour = Math.min(
-    daylightHours[bestEnd].hour + 1,
-    sunsetHour,
-  );
+  const startHour = Math.max(daylightHours[bestStart].hour, sunriseHour);
+  const endHour = Math.min(daylightHours[bestEnd].hour + 1, sunsetHour);
 
   const peakHour = daylightHours[peakIndex].hour;
   return {
@@ -305,20 +282,15 @@ const daylightHours =
     peakHour,
 
     startPercent:
-        ((startHour - sunriseHour) /
-          (sunsetHour - sunriseHour)) *
-        100,
+      ((startHour - sunriseHour) / (sunsetHour - sunriseHour)) * 100,
 
-      endPercent:
-        ((endHour - sunriseHour) /
-          (sunsetHour - sunriseHour)) *
-        100,
+    endPercent: ((endHour - sunriseHour) / (sunsetHour - sunriseHour)) * 100,
 
     score: bestAverage,
 
     label: bestAverage >= 6 ? 'Prime' : bestAverage >= 4 ? 'Good' : 'Fair',
   };
-} 
+}
 
 function getActivityLevel(
   biteScore: number,
@@ -329,9 +301,7 @@ function getActivityLevel(
     return 'fair';
   }
 
-  const normalizedScore =
-    (biteScore - minScore) /
-    (maxScore - minScore);
+  const normalizedScore = (biteScore - minScore) / (maxScore - minScore);
   if (normalizedScore >= 0.85) {
     return 'prime';
   }
@@ -365,27 +335,28 @@ export function buildActivitySegments(
     return [];
   }
 
-  const scores =
-      daylightHours.map(
-        hour => hour.biteScore,
-      );
+  const scores = daylightHours.map(hour => hour.biteScore);
 
-    const minScore =
-      Math.min(...scores);
+  const minScore = Math.min(...scores);
 
-    const maxScore =
-      Math.max(...scores);
+  const maxScore = Math.max(...scores);
 
   const segments: ActivitySegment[] = [];
 
   let startHour = daylightHours[0].hour;
 
-  let currentLevel = getActivityLevel(daylightHours[0].biteScore, minScore, maxScore);
+  let currentLevel = getActivityLevel(
+    daylightHours[0].biteScore,
+    minScore,
+    maxScore,
+  );
 
   for (let i = 1; i <= daylightHours.length; i++) {
     const current = daylightHours[i];
 
-    const nextLevel = current ? getActivityLevel(current.biteScore, minScore, maxScore) : null;
+    const nextLevel = current
+      ? getActivityLevel(current.biteScore, minScore, maxScore)
+      : null;
     if (nextLevel !== currentLevel) {
       const endHour = current?.hour ?? DAY_END;
 
@@ -412,11 +383,7 @@ export function calculatePrecipitationSummary(
   daily: DailyWeather[],
   currentTime: string,
 ): PrecipitationSummary {
-  const currentIndex =
-    hourly.findIndex(
-      hour =>
-        hour.time === currentTime,
-    );
+  const currentIndex = hourly.findIndex(hour => hour.time === currentTime);
   /*
    * Open-Meteo current time may not always
    * exactly match an hourly timestamp.
@@ -424,58 +391,24 @@ export function calculatePrecipitationSummary(
   const nearestIndex =
     currentIndex >= 0
       ? currentIndex
-      : hourly.findIndex(
-          hour =>
-            hour.time >= currentTime,
-        );
+      : hourly.findIndex(hour => hour.time >= currentTime);
 
-  const index =
-    nearestIndex >= 0
-      ? nearestIndex
-      : 0;
+  const index = nearestIndex >= 0 ? nearestIndex : 0;
 
-  const last24Hours =
-    hourly
-      .slice(
-        Math.max(0, index - 23),
-        index + 1,
-      )
-      .reduce(
-        (sum, hour) =>
-          sum +
-          hour.precipitation,
-        0,
-      );
+  const last24Hours = hourly
+    .slice(Math.max(0, index - 23), index + 1)
+    .reduce((sum, hour) => sum + hour.precipitation, 0);
 
-  const next48Hours =
-    hourly
-      .slice(
-        index + 1,
-        index + 49,
-      )
-      .reduce(
-        (sum, hour) =>
-          sum +
-          hour.precipitation,
-        0,
-      );
+  const next48Hours = hourly
+    .slice(index + 1, index + 49)
+    .reduce((sum, hour) => sum + hour.precipitation, 0);
 
-  const today =
-    currentTime.split('T')[0];
+  const today = currentTime.split('T')[0];
 
-  const last7Days =
-    daily
-      .filter(
-        day =>
-          day.date <= today,
-      )
-      .slice(-7)
-      .reduce(
-        (sum, day) =>
-          sum +
-          day.precipitation,
-        0,
-      );
+  const last7Days = daily
+    .filter(day => day.date <= today)
+    .slice(-7)
+    .reduce((sum, day) => sum + day.precipitation, 0);
 
   return {
     last24Hours,
@@ -489,16 +422,10 @@ export function estimateWaterClarity(
   precipitation: PrecipitationSummary,
 ): WaterClarity {
   return {
-      river:
-        estimateRiverClarity(
-          precipitation,
-        ),
+    river: estimateRiverClarity(precipitation),
 
-      headwater:
-        estimateHeadwaterClarity(
-          precipitation,
-        ),
-    };
+    headwater: estimateHeadwaterClarity(precipitation),
+  };
 }
 
 export const clarityThresholds = {
@@ -521,52 +448,30 @@ export const clarityThresholds = {
 export function getHoursSinceRain(
   hourly: HourlyWeather[],
   currentIndex: number,
-): number | null {
-  for (
-    let i = currentIndex;
-    i >= 0;
-    i--
-  ) {
-    if (
-      hourly[i].precipitation > 0.01
-    ) {
+): number {
+  for (let i = currentIndex; i >= 0; i--) {
+    if (hourly[i].precipitation > 0.01) {
       return currentIndex - i;
     }
   }
 
-  return null;
+  return 999; // Arbitrary large number to indicate no recent rain
 }
 
 function estimateHeadwaterClarity(
   precipitation: PrecipitationSummary,
 ): WaterClarityType {
-  const {
-    last24Hours,
-    last7Days,
-    hoursSinceRain,
-  } = precipitation;
+  const { last24Hours, last7Days, hoursSinceRain } = precipitation;
 
-  if (
-    hoursSinceRain !== null &&
-    hoursSinceRain <= 4 &&
-    last24Hours >= 0.75
-  ) {
+  if (hoursSinceRain !== null && hoursSinceRain <= 4 && last24Hours >= 0.75) {
     return 'highlyStained';
   }
 
-  if (
-    hoursSinceRain !== null &&
-    hoursSinceRain <= 8 &&
-    last24Hours >= 0.4
-  ) {
+  if (hoursSinceRain !== null && hoursSinceRain <= 8 && last24Hours >= 0.4) {
     return 'stained';
   }
 
-  if (
-    hoursSinceRain !== null &&
-    hoursSinceRain <= 16 &&
-    last24Hours >= 0.15
-  ) {
+  if (hoursSinceRain !== null && hoursSinceRain <= 16 && last24Hours >= 0.15) {
     return 'slightlyStained';
   }
 
@@ -575,10 +480,7 @@ function estimateHeadwaterClarity(
    * once the rain has been over for a while,
    * don't keep penalizing clarity heavily.
    */
-  if (
-    hoursSinceRain !== null &&
-    hoursSinceRain > 16
-  ) {
+  if (hoursSinceRain !== null && hoursSinceRain > 16) {
     if (last7Days >= 2.5) {
       return 'slightlyStained';
     }
@@ -592,34 +494,20 @@ function estimateHeadwaterClarity(
 function estimateRiverClarity(
   precipitation: PrecipitationSummary,
 ): WaterClarityType {
-  const {
-    last24Hours,
-    last7Days,
-    hoursSinceRain,
-  } = precipitation;
+  const { last24Hours, last7Days, hoursSinceRain } = precipitation;
 
-  if (
-    last24Hours >= 0.9 ||
-    last7Days >= 2.25
-  ) {
+  if (last24Hours >= 0.9 || last7Days >= 2.25) {
     return 'highlyStained';
   }
 
-  if (
-    last24Hours >= 0.45 ||
-    last7Days >= 1.4
-  ) {
+  if (last24Hours >= 0.45 || last7Days >= 1.4) {
     return 'stained';
   }
 
   if (
     last24Hours >= 0.15 ||
     last7Days >= 0.65 ||
-    (
-      hoursSinceRain !== null &&
-      hoursSinceRain <= 36 &&
-      last24Hours > 0.05
-    )
+    (hoursSinceRain !== null && hoursSinceRain <= 36 && last24Hours > 0.05)
   ) {
     return 'slightlyStained';
   }
@@ -634,9 +522,7 @@ export type CloudCoverage =
   | 'mostlyCloudy'
   | 'overcast';
 
-export function getCloudCoverage(
-  cloudCover: number,
-): CloudCoverage {
+export function getCloudCoverage(cloudCover: number): CloudCoverage {
   if (cloudCover <= 10) {
     return 'clear';
   }
@@ -656,10 +542,7 @@ export function getCloudCoverage(
   return 'overcast';
 }
 
-export const cloudCoveragePhrase: Record<
-  CloudCoverage,
-  string
-> = {
+export const cloudCoveragePhrase: Record<CloudCoverage, string> = {
   clear: 'Clear Skies',
   mostlyClear: 'Mostly Clear',
   partlyCloudy: 'Broken Cloud Cover',
@@ -692,10 +575,8 @@ export function getPressureBaseline(
   }
 
   const average =
-    dailyPressureMeans.reduce(
-      (sum, value) => sum + value,
-      0,
-    ) / dailyPressureMeans.length;
+    dailyPressureMeans.reduce((sum, value) => sum + value, 0) /
+    dailyPressureMeans.length;
 
   return {
     average,
@@ -709,43 +590,32 @@ export function getPressureTrend(
   index: number,
   baselinePressure: number,
 ): PressureTrend {
-  const current =
-    hourly[index].pressure;
+  const current = hourly[index].pressure;
 
-  const threeHourIndex =
-    Math.max(0, index - 3);
+  const threeHourIndex = Math.max(0, index - 3);
 
-  const sixHourIndex =
-    Math.max(0, index - 6);
+  const sixHourIndex = Math.max(0, index - 6);
 
-  const change3Hour =
-    current -
-    hourly[threeHourIndex].pressure;
+  const change3Hour = current - hourly[threeHourIndex].pressure;
 
-  const change6Hour =
-    current -
-    hourly[sixHourIndex].pressure;
+  const change6Hour = current - hourly[sixHourIndex].pressure;
 
   return {
     current,
 
-    baseline:
-      baselinePressure,
+    baseline: baselinePressure,
 
-    relativeToBaseline:
-      current -
-      baselinePressure,
+    relativeToBaseline: current - baselinePressure,
 
     change3Hour,
     change6Hour,
 
-    phase:
-      classifyPressurePhase(
-        current,
-        change3Hour,
-        change6Hour,
-        baselinePressure,
-      ),
+    phase: classifyPressurePhase(
+      current,
+      change3Hour,
+      change6Hour,
+      baselinePressure,
+    ),
   };
 }
 
@@ -755,25 +625,17 @@ export function classifyPressurePhase(
   change6Hour: number,
   baselinePressure: number,
 ): PressurePhase {
-  const relativeToBaseline =
-    currentPressure -
-    baselinePressure;
+  const relativeToBaseline = currentPressure - baselinePressure;
 
   if (change3Hour <= -2) {
     return 'rapidlyFalling';
   }
 
-  if (
-    change3Hour <= -0.7 ||
-    change6Hour <= -1.5
-  ) {
+  if (change3Hour <= -0.7 || change6Hour <= -1.5) {
     return 'falling';
   }
 
-  if (
-    change3Hour >= 0.7 ||
-    change6Hour >= 1.5
-  ) {
+  if (change3Hour >= 0.7 || change6Hour >= 1.5) {
     return 'rising';
   }
 
@@ -789,19 +651,14 @@ export function classifyPressurePhase(
    * Current pressure is meaningfully above
    * the recent local baseline and stable.
    */
-  if (
-    relativeToBaseline >= 5 &&
-    Math.abs(change6Hour) < 1
-  ) {
+  if (relativeToBaseline >= 5 && Math.abs(change6Hour) < 1) {
     return 'stableHigh';
   }
 
   return 'stable';
 }
 
-export function getPressureBiteModifier(
-  phase: PressurePhase,
-): number {
+export function getPressureBiteModifier(phase: PressurePhase): number {
   switch (phase) {
     case 'rapidlyFalling':
       return 2.5;

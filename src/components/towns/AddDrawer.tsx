@@ -1,6 +1,6 @@
 // src/components/towns/AddTownDrawer.tsx
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
@@ -33,7 +33,7 @@ export function AddTownDrawer({
   onAddTown,
 }: AddTownDrawerProps) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<LocationSearchResult[]>([]);
+  const [results, setResults] = useState<Station[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export function AddTownDrawer({
               </Text>
             </View>
           </View>
-          {results.map((station, index) => (
+          {results.map((station) => (
             <StationResultCard
               key={station.id}
               station={station}
