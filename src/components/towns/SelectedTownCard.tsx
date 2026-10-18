@@ -5,10 +5,12 @@ import type { Station } from '../../types/station';
 import type { CachedTownWeather } from '../../types/weather';
 import { getScoreColor } from '../../functions/func';
 import { stateCodes } from '../../types/states';
+import { WeatherDataState } from '../ui/WeatherDataState';
 
 interface SelectedTownCardProps {
   town: Station;
   weather?: CachedTownWeather;
+  weatherLoading?: boolean;
   onPress?: (town: Station) => void;
 }
 
@@ -16,6 +18,7 @@ export function SelectedTownCard({
   town,
   onPress,
   weather,
+  weatherLoading = false,
 }: SelectedTownCardProps) {
   const scoreColor = getScoreColor(weather?.data.current.score.total || 0);
   return (
@@ -44,51 +47,60 @@ export function SelectedTownCard({
         </View>
 
         {/* Score */}
-        <View
-          className="shrink-0 rounded-lg border px-3 py-1.5 shadow-sm"
-          style={{
-            backgroundColor: scoreColor.bgColor,
-            borderColor: scoreColor.outline,
-          }}
-        >
-          <View className="flex-row items-center justify-center gap-1">
-            <View
-              className="h-2 w-2 rounded-full bg-secondary-fixed"
-              style={{ backgroundColor: scoreColor.textColor }}
-            />
+        {weather ? (
+          <View
+            className="shrink-0 rounded-lg border px-3 py-1.5 shadow-sm"
+            style={{
+              backgroundColor: scoreColor.bgColor,
+              borderColor: scoreColor.outline,
+            }}
+          >
+            <View className="flex-row items-center justify-center gap-1">
+              <View
+                className="h-2 w-2 rounded-full bg-secondary-fixed"
+                style={{ backgroundColor: scoreColor.textColor }}
+              />
+
+              <Text
+                className="font-headline-sm text-[18px] leading-none text-secondary-fixed"
+                style={{ color: scoreColor.textColor }}
+              >
+                {weather.data.current.score.total}
+              </Text>
+            </View>
 
             <Text
-              className="font-headline-sm text-[18px] leading-none text-secondary-fixed"
+              className="mt-0.5 text-center font-label-sm text-[10px] uppercase tracking-widest"
               style={{ color: scoreColor.textColor }}
             >
-              {weather?.data.current.score.total}
+              {weather.data.current.score.label}
             </Text>
           </View>
-
-          <Text
-            className="mt-0.5 text-center font-label-sm text-[10px] uppercase tracking-widest"
-            style={{ color: scoreColor.textColor }}
-          >
-            {weather?.data.current.score.label}
-          </Text>
-        </View>
+        ) : (
+          <WeatherDataState loading={weatherLoading} compact />
+        )}
       </View>
 
       {/* Bottom detail row */}
       <View className="mt-3 flex-row items-center justify-between rounded-lg bg-surface-container-lowest px-3 py-2">
         <View className="flex-row items-center gap-2">
-          {/* Water temperature */}
-          <View className="flex-row items-baseline gap-1">
-            <Text className="font-title-md text-title-md text-primary">
-              ~{weather?.data.current.waterTemp?.toFixed(0)}°
-            </Text>
+          {weather ? (
+            <>
+              <View className="flex-row items-baseline gap-1">
+                <Text className="font-title-md text-title-md text-primary">
+                  ~{weather.data.current.waterTemp.toFixed(0)}°
+                </Text>
 
-            <Text className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-              Water
-            </Text>
-          </View>
+                <Text className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+                  Water
+                </Text>
+              </View>
 
-          <Text className="text-xs text-outline-variant">•</Text>
+              <Text className="text-xs text-outline-variant">•</Text>
+            </>
+          ) : (
+            <WeatherDataState loading={weatherLoading} compact />
+          )}
 
           {/* Technique */}
           <View className="flex-row items-center gap-1">

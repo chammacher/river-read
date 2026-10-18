@@ -16,11 +16,11 @@ export function Header({
 }: PropsWithChildren<HeaderProps>) {
   return (
     <View className="fixed top-0 pt-6 w-full z-50 bg-surface opacity-80 backdrop-blur-xl shadow-lg">
-      <View className="h-16 pl-margin-mobile flex-row gap-4 items-center">
+      <View className="h-16 pl-margin-mobile flex-row gap-4 items-top">
         {isDetails && (
           <Pressable
             aria-label="Navigate back"
-            className="pr-20 flex-row items-center justify-center text-primary active:bg-surface-container transition-colors rounded-lg"
+            className="px-4 py-3 flex-row items-center justify-center text-primary active:bg-surface-container transition-colors rounded-lg self-start"
             onPress={onBack}
           >
             <ArrowBack width={22} height={22} color="#052215" />
@@ -31,14 +31,14 @@ export function Header({
         ) : (
           <View className="flex flex-col flex-1">
             <Text className="font-label-sm text-label-sm uppercase text-secondary tracking-widest">
-              Field Register
+              RiverRead
             </Text>
             <Text className="font-headline-sm text-headline-sm text-primary leading-none ">
               Towns &amp; Waters
             </Text>
           </View>
         )}
-        <View className="flex-row items-center">
+        <View className="self-start flex-row items-center">
           {isDetails ? (
             <Pressable
               className="flex-row items-center gap-1 px-3 py-1.5 rounded-full bg-tertiary hover:bg-surface-container-high transition-all duration-200 active:scale-95 shadow-sm text-label-sm font-label-sm uppercase tracking-wider"

@@ -6,7 +6,49 @@ import { FlyRecommendation } from './fly';
 export interface CachedTownWeather {
   data: TownWeather;
   lastUpdated: string;
+  source?: RawTownWeather;
 }
+
+export interface RawCurrentWeather {
+  time: string;
+  temperature: number;
+  apparentTemperature: number;
+  humidity: number;
+  precipitation: number;
+  cloudCover: number;
+  pressure: number;
+  windSpeed: number;
+  weatherCode: number;
+}
+
+export interface RawHourlyWeather {
+  time: string;
+  temperature: number;
+  precipitation: number;
+  pressure: number;
+}
+
+export interface RawDailyWeather {
+  date: string;
+  temperatureMax: number;
+  temperatureMin: number;
+  temperatureMean: number;
+  precipitation: number;
+  weatherCode: number;
+  cloudCoverMean: number;
+  pressureMean: number;
+  sunrise: string;
+  sunset: string;
+}
+
+export interface RawTownWeather {
+  timezone: string;
+  current: RawCurrentWeather;
+  hourly: RawHourlyWeather[];
+  daily: RawDailyWeather[];
+}
+
+export type RawTownWeatherMap = Map<string, RawTownWeather>;
 
 export interface CurrentWeather {
   temperature: number;
@@ -108,7 +150,7 @@ export interface DailyWeather {
 
 export interface TownWeather {
   current: CurrentWeatherDerivation;
-  daily: DailyWeather[];
+  daily: RawDailyWeather[];
   hourly: HourlyWeather[];
 }
 

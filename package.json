@@ -9,7 +9,15 @@
     "start": "react-native start",
     "test": "jest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "android:install": "./utils/install-android.sh",
+    "android:clean": "./utils/clean-android.sh",
+    "android:release": "./utils/build-android-release.sh",
+    "ios:install": "./utils/install-ios.sh",
+    "ios:clean": "./utils/clean-ios.sh",
+    "release:patch": "./utils/release.sh patch",
+    "release:minor": "./utils/release.sh minor",
+    "release:major": "./utils/release.sh major"
   },
   "dependencies": {
     "@material-symbols-svg/react-native": "^0.14.0",

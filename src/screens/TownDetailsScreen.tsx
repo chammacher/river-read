@@ -29,7 +29,6 @@ type TownDetailsNavigationProp = NativeStackNavigationProp<
 
 import { stateCodes } from '../types/states';
 import {
-  formatCoordinate,
   getScoreColor,
   getWeatherAgeMinutes,
 } from '../functions/func';
@@ -46,6 +45,7 @@ import { PatternCard } from '../components/ui/PatternCard';
 import { BiteWindowCard } from '../components/ui/BiteWindowCard';
 import { PressureGraph } from '../components/ui/PressureGraph';
 import { DetailsSectionHeader } from '../components/ui/DetailsSectionHeader';
+import { WeatherDataState } from '../components/ui/WeatherDataState';
 
 export function TownDetailsScreen() {
   const route = useRoute<TownDetailsRouteProp>();
@@ -53,42 +53,41 @@ export function TownDetailsScreen() {
 
   const { townId } = route.params;
   const { getTown, removeTown } = useTowns();
-  const { getWeather, refreshWeather, isRefreshing } = useWeather();
+  const {
+    getWeather,
+    refreshWeather,
+    isRefreshing,
+    isLoading: weatherLoading,
+    isCacheLoaded,
+  } = useWeather();
 
-  const weather = getWeather(townId);
-  if (!weather) {
-    return (
-      <SafeAreaView className="flex-1 bg-surface">
-        <View className="flex-1 items-center justify-center px-gutter">
-          <Text className="font-headline-sm text-headline-sm font-semibold text-primary">
-            Weather Unavailable
-          </Text>
-
-          <Text className="mt-space-sm text-center font-telemetry text-[11px] text-on-surface-variant">
-            No weather data has been saved for this location yet. Connect to the
-            internet and refresh to load current conditions.
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
   const town = getTown(townId);
-  // If the town is not found, return null or handle the error appropriately
   if (!town) {
     return null;
   }
-  const dailyWeather = weather?.data?.daily[weather.data.daily.length / 2];
-  const currentWeather = weather.data?.current;
-  const hourlyWeather = weather.data?.hourly;
-  const waterTempPercent = (
-    ((currentWeather.waterTemp - 40) / 30) *
-    100
-  ).toFixed(0);
-
-  const scoreColor = getScoreColor(currentWeather.score.total);
-  const cloudCoverage = getCloudCoverage(currentWeather.cloudCover);
-
-  const cloudPhrase = cloudCoveragePhrase[cloudCoverage];
+  const weather = getWeather(townId);
+  const currentWeather = weather?.data.current;
+  const today = currentWeather?.time.slice(0, 10);
+  const dailyWeather = weather?.data.daily.find(day => day.date === today);
+  const hourlyWeather = weather?.data.hourly;
+  const isWeatherLoading = !isCacheLoaded || weatherLoading;
+  const waterTempPercent = currentWeather
+    ? (((currentWeather.waterTemp - 40) / 30) * 100).toFixed(0)
+    : '0';
+  const scoreColor = currentWeather
+    ? getScoreColor(currentWeather.score.total)
+    : undefined;
+  const cloudCoverage = currentWeather
+    ? getCloudCoverage(currentWeather.cloudCover)
+    : undefined;
+  const cloudPhrase = cloudCoverage
+    ? cloudCoveragePhrase[cloudCoverage]
+    : undefined;
+  const lastUpdatedLabel = weather
+    ? `Updated ${getWeatherAgeMinutes(weather.lastUpdated)}m ago`
+    : isWeatherLoading
+      ? 'Loading weather'
+      : 'Weather not updated yet';
 
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'bottom']}>
@@ -107,10 +106,8 @@ export function TownDetailsScreen() {
                 {town.name}, {stateCodes[town.state]}
               </Text>
 
-              <Text className="mt-0.5 font-telemetry text-telemetry text-on-surface-variant">
-                Elev. {town.elevation} ft •{' '}
-                {formatCoordinate(town.latitude, 'latitude')}{' '}
-                {formatCoordinate(town.longitude, 'longitude')}
+              <Text className=" font-telemetry text-telemetry text-on-surface-variant">
+                Elev. {town.elevation} ft
               </Text>
             </View>
           </View>
@@ -123,6 +120,8 @@ export function TownDetailsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
+              title={lastUpdatedLabel}
+              titleColor="#406840"
               onRefresh={() => refreshWeather(true)}
             />
           }
@@ -130,62 +129,66 @@ export function TownDetailsScreen() {
           {/* Station summary */}
           <View className="px-margin-mobile pt-space-md">
             <View className="rounded-xl bg-surface-container-low p-space-md shadow-sm">
-              <View className="mt-space-sm flex-row items-center gap-space-xs rounded-lg bg-surface-container-lowest/60 p-2">
-                <Update size={18} color="#052215" />
+              {weather && currentWeather && scoreColor ? (
+                <>
+                  <View className="mt-space-sm flex-row items-center gap-space-xs rounded-lg bg-surface-container-lowest/60 p-2">
+                    <Update size={18} color="#052215" />
 
-                <Text className="flex-1 font-body-sm text-body-sm text-on-surface-variant">
-                  Synchronized {getWeatherAgeMinutes(weather.lastUpdated)}m ago
-                  • Municipal Weather & Open-Meteo Best Match
-                </Text>
-              </View>
-
-              {/* Fishability */}
-              <View className="mt-space-md gap-space-sm rounded-xl bg-primary p-space-md shadow-md">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-space-xs">
-                    <Phishing size={22} color="#C1EEBC" />
-
-                    <Text className="font-label-md text-label-md uppercase tracking-widest text-primary-fixed">
-                      Fishability Index
+                    <Text className="flex-1 font-body-sm text-body-sm text-on-surface-variant">
+                      Synchronized {getWeatherAgeMinutes(weather.lastUpdated)}m
+                      ago • Municipal Weather & Open-Meteo Best Match
                     </Text>
                   </View>
 
-                  <View
-                    className="flex-row items-center gap-1 rounded-full border px-2.5 py-1"
-                    style={{
-                      backgroundColor: scoreColor.bgColor,
-                      borderColor: scoreColor.outline,
-                    }}
-                  >
-                    <View
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ backgroundColor: scoreColor.textColor }}
-                    />
+                  <View className="mt-space-md gap-space-sm rounded-xl bg-primary p-space-md shadow-md">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-space-xs">
+                        <Phishing size={22} color="#C1EEBC" />
 
-                    <Text
-                      className="font-label-sm text-label-sm uppercase tracking-wider"
-                      style={{ color: scoreColor.textColor }}
-                    >
-                      {currentWeather.score.total}
+                        <Text className="font-label-md text-label-md uppercase tracking-widest text-primary-fixed">
+                          Fishability Index
+                        </Text>
+                      </View>
+
+                      <View
+                        className="flex-row items-center gap-1 rounded-full border px-2.5 py-1"
+                        style={{
+                          backgroundColor: scoreColor.bgColor,
+                          borderColor: scoreColor.outline,
+                        }}
+                      >
+                        <View
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: scoreColor.textColor }}
+                        />
+
+                        <Text
+                          className="font-label-sm text-label-sm uppercase tracking-wider"
+                          style={{ color: scoreColor.textColor }}
+                        >
+                          {currentWeather.score.total}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className="flex-row items-baseline gap-space-sm">
+                      <Text className="font-headline-lg text-headline-lg font-bold tracking-tight text-on-primary">
+                        {currentWeather.score.total}
+                      </Text>
+
+                      <Text className="font-telemetry text-telemetry text-primary-fixed-dim">
+                        / 10.0 Peak Activity Target
+                      </Text>
+                    </View>
+
+                    <Text className="font-body-md text-body-md leading-snug text-primary-fixed">
+                      {currentWeather.score.reasons.join('. ')}
                     </Text>
                   </View>
-                </View>
-
-                <View className="flex-row items-baseline gap-space-sm">
-                  <Text className="font-headline-lg text-headline-lg font-bold tracking-tight text-on-primary">
-                    {currentWeather.score.total}
-                  </Text>
-
-                  <Text className="font-telemetry text-telemetry text-primary-fixed-dim">
-                    / 10.0 Peak Activity Target
-                  </Text>
-                </View>
-
-                {/** TODO: replace this when decision graph is created for hatch and recommendations */}
-                <Text className="font-body-md text-body-md leading-snug text-primary-fixed">
-                  {currentWeather.score.reasons.join('. ')}
-                </Text>
-              </View>
+                </>
+              ) : (
+                <WeatherDataState loading={isWeatherLoading} />
+              )}
             </View>
           </View>
 
@@ -197,96 +200,110 @@ export function TownDetailsScreen() {
               icon={Tune}
             />
 
-            <View className="flex-row gap-space-sm">
-              <MetricCard
-                label="Water Temp"
-                value={currentWeather.waterTemp.toFixed(0) + '°F'}
-                status="Optimal Feeding"
-                footer={`Diurnal spread ${currentWeather.waterTempMin.toFixed(
-                  0,
-                )}°F – ${currentWeather.waterTempMax.toFixed(0)}°F`}
-                icon={DeviceThermostat}
-                statusAccent
-              />
+            {currentWeather && dailyWeather && cloudPhrase ? (
+              <>
+                <View className="flex-row gap-space-sm">
+                  <MetricCard
+                    label="Water Temp"
+                    value={currentWeather.waterTemp.toFixed(0) + '°F'}
+                    status="Optimal Feeding"
+                    footer={`Diurnal spread ${currentWeather.waterTempMin.toFixed(
+                      0,
+                    )}°F – ${currentWeather.waterTempMax.toFixed(0)}°F`}
+                    icon={DeviceThermostat}
+                    statusAccent
+                  />
 
-              <MetricCard
-                label="Air Temp"
-                value={currentWeather.temperature.toFixed(0) + '°F'}
-                status={`Feels like ${currentWeather.apparentTemperature.toFixed(
-                  0,
-                )}°F`}
-                footer={`High ${dailyWeather.temperatureMax.toFixed(
-                  0,
-                )}°F • Low ${dailyWeather.temperatureMin.toFixed(0)}°F`}
-                icon={Thermostat}
-              />
-            </View>
-            <View className="mt-space-sm flex-row gap-space-sm">
-              <MetricCard
-                label="Clarity & Flow"
-                footer={'River ' + clarityPhrase[currentWeather.clarity.river]}
-                secondFooter={
-                  'Headwater ' + clarityPhrase[currentWeather.clarity.headwater]
-                }
-                icon={Water}
-                statusAccent
-              />
+                  <MetricCard
+                    label="Air Temp"
+                    value={currentWeather.temperature.toFixed(0) + '°F'}
+                    status={`Feels like ${currentWeather.apparentTemperature.toFixed(
+                      0,
+                    )}°F`}
+                    footer={`High ${dailyWeather.temperatureMax.toFixed(
+                      0,
+                    )}°F • Low ${dailyWeather.temperatureMin.toFixed(0)}°F`}
+                    icon={Thermostat}
+                  />
+                </View>
+                <View className="mt-space-sm flex-row gap-space-sm">
+                  <MetricCard
+                    label="Clarity & Flow"
+                    footer={'River ' + clarityPhrase[currentWeather.clarity.river]}
+                    secondFooter={
+                      'Headwater ' +
+                      clarityPhrase[currentWeather.clarity.headwater]
+                    }
+                    icon={Water}
+                    statusAccent
+                  />
 
-              {/* Sky */}
-              <MetricCard
-                label="Sky Condition"
-                value={`${currentWeather.cloudCover}% Coverage`}
-                status={cloudPhrase}
-                icon={FilterDrama}
-              />
-            </View>
+                  <MetricCard
+                    label="Sky Condition"
+                    value={`${currentWeather.cloudCover}% Coverage`}
+                    status={cloudPhrase}
+                    icon={FilterDrama}
+                  />
+                </View>
+              </>
+            ) : (
+              <WeatherDataState loading={isWeatherLoading} />
+            )}
 
-            <View className="mt-space-sm rounded-xl bg-surface-container-low p-space-md shadow-sm">
-              <View className="mb-space-xs flex-row items-center justify-between">
-                <View className="flex-row items-center gap-space-xs">
-                  <Compress size={18} color="#052215" />
+            {currentWeather && hourlyWeather ? (
+              <View className="mt-space-sm rounded-xl bg-surface-container-low p-space-md shadow-sm">
+                <View className="mb-space-xs flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-space-xs">
+                    <Compress size={18} color="#052215" />
 
-                  <Text className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                    MSL Barometer
+                    <Text className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+                      MSL Barometer
+                    </Text>
+                  </View>
+
+                  <Text className="font-telemetry text-telemetry font-bold text-primary">
+                    {currentWeather.pressure.current}
                   </Text>
                 </View>
 
-                <Text className="font-telemetry text-telemetry font-bold text-primary">
-                  {currentWeather.pressure?.current}
-                </Text>
+                <PressureGraph
+                  hourly={hourlyWeather}
+                  currentTime={currentWeather.time}
+                  baselinePressure={currentWeather.pressure.baseline}
+                />
               </View>
-
-              <PressureGraph
-                hourly={hourlyWeather}
-                currentTime={currentWeather.time}
-                baselinePressure={currentWeather.pressure.baseline}
-              />
-            </View>
+            ) : (
+              <WeatherDataState loading={isWeatherLoading} />
+            )}
 
             {/* Rain */}
-            <View className="mt-space-sm rounded-xl bg-surface-container-low p-space-md shadow-sm">
-              <View className="mb-space-xs flex-row items-center justify-between">
-                <View className="flex-row items-center gap-space-xs">
-                  <Rainy size={18} color="#406840" />
+            {currentWeather ? (
+              <View className="mt-space-sm rounded-xl bg-surface-container-low p-space-md shadow-sm">
+                <View className="mb-space-xs flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-space-xs">
+                    <Rainy size={18} color="#406840" />
 
-                  <Text className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                    Precipitation Status
+                    <Text className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+                      Precipitation Status
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-row flex-wrap items-center gap-2 rounded bg-surface-container p-space-sm">
+                  <Text className="font-telemetry text-telemetry text-primary">
+                    {currentWeather.last24Hours.toFixed(2)} in / past 24h
+                  </Text>
+
+                  <Text className="text-on-surface-variant">•</Text>
+
+                  <Text className="font-telemetry text-telemetry text-primary">
+                    {currentWeather.next48Hours.toFixed(2)} in / next 48h
                   </Text>
                 </View>
               </View>
-
-              <View className="flex-row flex-wrap items-center gap-2 rounded bg-surface-container p-space-sm">
-                <Text className="font-telemetry text-telemetry text-primary">
-                  {currentWeather.last24Hours.toFixed(2)} in / past 24h
-                </Text>
-
-                <Text className="text-on-surface-variant">•</Text>
-
-                <Text className="font-telemetry text-telemetry text-primary">
-                  {currentWeather.next48Hours.toFixed(2)} in / next 48h
-                </Text>
-              </View>
-            </View>
+            ) : (
+              <WeatherDataState loading={isWeatherLoading} />
+            )}
           </View>
 
           {/* Telemetry */}
@@ -297,50 +314,55 @@ export function TownDetailsScreen() {
               icon={Schedule}
             />
 
-            <View className="rounded-xl bg-surface-container-low p-space-md shadow-sm">
-              <BiteWindowCard
-                biteWindow={currentWeather.biteWindow}
-                hourly={hourlyWeather}
-                sunrise={currentWeather.sunrise}
-                sunset={currentWeather.sunset}
-              />
+            {currentWeather && hourlyWeather ? (
+              <View className="rounded-xl bg-surface-container-low p-space-md shadow-sm">
+                <BiteWindowCard
+                  biteWindow={currentWeather.biteWindow}
+                  hourly={hourlyWeather}
+                  sunrise={currentWeather.sunrise}
+                  sunset={currentWeather.sunset}
+                />
 
-              <View className="mt-space-sm pt-space-sm border-t border-outline-variant/20">
-                <View className="flex-row items-center justify-between">
-                  <Text className="font-body-sm text-body-sm text-on-surface">
-                    Trout Stress Limit
-                  </Text>
+                <View className="mt-space-sm pt-space-sm border-t border-outline-variant/20">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="font-body-sm text-body-sm text-on-surface">
+                      Trout Stress Limit
+                    </Text>
 
-                  <Text className="font-telemetry text-telemetry text-secondary">
-                    Safe Margin ({(currentWeather.waterTemp - 70).toFixed(0)}°F)
-                  </Text>
-                </View>
+                    <Text className="font-telemetry text-telemetry text-secondary">
+                      Safe Margin (
+                      {(currentWeather.waterTemp - 70).toFixed(0)}°F)
+                    </Text>
+                  </View>
 
-                <View className="relative mt-2 h-3 flex-row overflow-hidden rounded-full bg-surface-container">
-                  <View className="h-full w-[83%] bg-secondary-fixed-dim" />
-                  <View className="h-full flex-1 bg-tertiary-fixed-dim" />
+                  <View className="relative mt-2 h-3 flex-row overflow-hidden rounded-full bg-surface-container">
+                    <View className="h-full w-[83%] bg-secondary-fixed-dim" />
+                    <View className="h-full flex-1 bg-tertiary-fixed-dim" />
 
-                  <View
-                    className={`absolute bottom-0 top-0 w-1 bg-primary`}
-                    style={{ left: waterTempPercent + '%' }}
-                  />
-                </View>
+                    <View
+                      className="absolute bottom-0 top-0 w-1 bg-primary"
+                      style={{ left: waterTempPercent + '%' }}
+                    />
+                  </View>
 
-                <View className="mt-1 flex-row justify-between">
-                  <Text className="font-telemetry text-[10px] text-on-surface-variant">
-                    40°F Base
-                  </Text>
+                  <View className="mt-1 flex-row justify-between">
+                    <Text className="font-telemetry text-[10px] text-on-surface-variant">
+                      40°F Base
+                    </Text>
 
-                  <Text className="font-telemetry text-[10px] font-bold text-primary">
-                    {currentWeather.waterTemp.toFixed(0)}°F
-                  </Text>
+                    <Text className="font-telemetry text-[10px] font-bold text-primary">
+                      {currentWeather.waterTemp.toFixed(0)}°F
+                    </Text>
 
-                  <Text className="font-telemetry text-[10px] text-on-surface-variant">
-                    Stress: 70°F
-                  </Text>
+                    <Text className="font-telemetry text-[10px] text-on-surface-variant">
+                      Stress: 70°F
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
+            ) : (
+              <WeatherDataState loading={isWeatherLoading} />
+            )}
           </View>
 
           {/* Fly suggestions */}
@@ -350,11 +372,20 @@ export function TownDetailsScreen() {
               meta=""
               icon={PestControl}
             />
-            <View className="gap-space-sm">
-              {currentWeather.flyRecommendations.slice(0, 3).map(pattern => (
-                <PatternCard key={pattern.pattern.id} recommendation={pattern} />
-              ))}
-            </View>
+            {currentWeather ? (
+              <View className="gap-space-sm">
+                {currentWeather.flyRecommendations
+                  .slice(0, 3)
+                  .map(pattern => (
+                    <PatternCard
+                      key={pattern.pattern.id}
+                      recommendation={pattern}
+                    />
+                  ))}
+              </View>
+            ) : (
+              <WeatherDataState loading={isWeatherLoading} />
+            )}
           </View>
 
           {/* Field note

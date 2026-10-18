@@ -12,6 +12,147 @@ import type {
 
 import { flyPatterns } from '../data/flyPatterns';
 
+export const FLY_RECOMMENDATION_CONFIG = {
+  fishingSeason: {
+    transitionDay: 15,
+    months: {
+      winter: [12, 1],
+      february: 2,
+      march: 3,
+      april: 4,
+      may: 5,
+      june: 6,
+      july: 7,
+      august: 8,
+      september: 9,
+      october: 10,
+      november: 11,
+    },
+  },
+  recommendation: {
+    regionBonus: 2,
+    seasonBonus: 3,
+    maximumPatterns: 5,
+    missingWaterTemperature: 55,
+  },
+  colors: {
+    brightColors: ['pink', 'orange', 'red', 'chartreuse'],
+    naturalColors: ['natural', 'olive', 'brown', 'tan', 'gray'],
+    topOptions: {
+      maximumResults: 3,
+      maximumScoreGap: 4,
+    },
+    score: {
+      clear: { bright: -4, natural: 3 },
+      slightlyStained: { natural: 2, bright: 1 },
+      stained: { bright: 4, black: 3, natural: 0 },
+      highlyStained: { bright: 5, black: 4, natural: -3 },
+      recentRainThreshold: 0.3,
+      recentRainBrightBonus: 2,
+      highContrastColor: 'black',
+    },
+    preferredColors: {
+      highlyStained: ['pink', 'orange', 'chartreuse', 'red', 'black'],
+      stained: ['pink', 'orange', 'red', 'black'],
+      recentRain: ['pink', 'orange', 'natural', 'olive'],
+      slightlyStained: ['olive', 'brown', 'tan', 'black', 'natural'],
+      clear: ['natural', 'olive', 'brown', 'tan', 'black'],
+    },
+  },
+  categories: {
+    minimumScore: 0,
+    scud: {
+      baseScore: 2,
+      upperMidwestBonus: 4,
+      coolWaterMaximum: 52,
+      coolWaterBonus: 2,
+      moderateWaterMinimum: 52,
+      moderateWaterMaximum: 62,
+      moderateWaterBonus: 1,
+      slightlyStainedBonus: 1,
+      highlyStainedPenalty: 2,
+    },
+    attractorNymph: {
+      baseScore: 3,
+      slightlyStainedBonus: 2,
+      stainedBonus: 1,
+      suitableWaterMinimum: 45,
+      suitableWaterMaximum: 65,
+      suitableWaterBonus: 1,
+    },
+    streamer: {
+      baseScore: 1,
+      stainedBonus: 4,
+      slightlyStainedBonus: 2,
+      cloudCoverMinimum: 60,
+      cloudCoverBonus: 2,
+      fallingPressureBonus: 2,
+    },
+    terrestrial: {
+      baseScore: 0,
+      favorableSeasons: ['lateSummer', 'earlyFall'],
+      favorableSeasonBonus: 6,
+      suitableWaterMinimum: 55,
+      suitableWaterMaximum: 65,
+      suitableWaterBonus: 2,
+      clearWaterBonus: 1,
+    },
+    stonefly: {
+      baseScore: 0,
+      favorableSeasons: ['lateSpring', 'earlySummer'],
+      favorableSeasonBonus: 5,
+      suitableWaterMinimum: 48,
+      suitableWaterMaximum: 62,
+      suitableWaterBonus: 2,
+      slightlyStainedBonus: 1,
+    },
+    caddis: {
+      baseScore: 0,
+      favorableSeasons: ['lateSpring', 'earlySummer', 'lateSummer'],
+      favorableSeasonBonus: 5,
+      suitableWaterMinimum: 52,
+      suitableWaterMaximum: 65,
+      suitableWaterBonus: 2,
+      clearWaterBonus: 1,
+    },
+    pmd: {
+      baseScore: 0,
+      favorableSeasons: ['lateSpring', 'earlySummer'],
+      favorableSeasonBonus: 6,
+      suitableWaterMinimum: 50,
+      suitableWaterMaximum: 62,
+      suitableWaterBonus: 2,
+      cloudCoverMinimum: 30,
+      cloudCoverMaximum: 80,
+      cloudCoverBonus: 1,
+    },
+    midge: {
+      baseScore: 2,
+      favorableSeasons: ['winter', 'earlySpring', 'lateFall'],
+      favorableSeasonBonus: 5,
+      coolWaterMaximum: 50,
+      coolWaterBonus: 2,
+    },
+    bwo: {
+      baseScore: 0,
+      favorableSeasons: ['earlySpring', 'earlyFall', 'lateFall'],
+      favorableSeasonBonus: 5,
+      suitableWaterMinimum: 45,
+      suitableWaterMaximum: 58,
+      suitableWaterBonus: 2,
+      cloudCoverMinimum: 60,
+      cloudCoverBonus: 3,
+    },
+    worm: {
+      baseScore: 0,
+      rainyDayMinimum: 0.2,
+      recentRainBonus: 5,
+      stainedWaterBonus: 4,
+      slightlyStainedBonus: 2,
+    },
+  },
+} as const;
+
 export interface CategoryScore {
   category: FlyCategory;
   score: number;
@@ -24,48 +165,49 @@ export function getFishingSeason(date: Date | string): FishingSeason {
   const month = parsedDate.getMonth() + 1;
 
   const day = parsedDate.getDate();
+  const config = FLY_RECOMMENDATION_CONFIG.fishingSeason;
 
-  if (month === 12 || month === 1) {
+  if (config.months.winter.some(seasonMonth => seasonMonth === month)) {
     return 'winter';
   }
 
-  if (month === 2) {
-    return day <= 15 ? 'winter' : 'earlySpring';
+  if (month === config.months.february) {
+    return day <= config.transitionDay ? 'winter' : 'earlySpring';
   }
 
-  if (month === 3) {
+  if (month === config.months.march) {
     return 'earlySpring';
   }
 
-  if (month === 4) {
-    return day <= 15 ? 'earlySpring' : 'lateSpring';
+  if (month === config.months.april) {
+    return day <= config.transitionDay ? 'earlySpring' : 'lateSpring';
   }
 
-  if (month === 5) {
+  if (month === config.months.may) {
     return 'lateSpring';
   }
 
-  if (month === 6) {
-    return day <= 15 ? 'lateSpring' : 'earlySummer';
+  if (month === config.months.june) {
+    return day <= config.transitionDay ? 'lateSpring' : 'earlySummer';
   }
 
-  if (month === 7) {
+  if (month === config.months.july) {
     return 'earlySummer';
   }
 
-  if (month === 8) {
-    return day <= 15 ? 'earlySummer' : 'lateSummer';
+  if (month === config.months.august) {
+    return day <= config.transitionDay ? 'earlySummer' : 'lateSummer';
   }
 
-  if (month === 9) {
+  if (month === config.months.september) {
     return 'earlyFall';
   }
 
-  if (month === 10) {
-    return day <= 15 ? 'earlyFall' : 'lateFall';
+  if (month === config.months.october) {
+    return day <= config.transitionDay ? 'earlyFall' : 'lateFall';
   }
 
-  if (month === 11) {
+  if (month === config.months.november) {
     return 'lateFall';
   }
 
@@ -135,11 +277,11 @@ export function recommendFlyPatterns(
       const reasons = [...(category?.reasons ?? [])];
 
       if (pattern.regions.includes(conditions.region)) {
-        score += 2;
+        score += FLY_RECOMMENDATION_CONFIG.recommendation.regionBonus;
       }
 
       if (pattern.seasons.includes(conditions.season)) {
-        score += 3;
+        score += FLY_RECOMMENDATION_CONFIG.recommendation.seasonBonus;
       }
 
       const colorRecommendation = getBestPatternColor(pattern, conditions);
@@ -158,7 +300,7 @@ export function recommendFlyPatterns(
       };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+    .slice(0, FLY_RECOMMENDATION_CONFIG.recommendation.maximumPatterns);
 }
 
 function scorePatternColor(
@@ -167,25 +309,16 @@ function scorePatternColor(
 ): ColorScore {
   const { clarity, precipitationLast24Hours } = conditions;
 
-  const brightColors: FlyColor[] = ['pink', 'orange', 'red', 'chartreuse'];
-
-  const naturalColors: FlyColor[] = [
-    'natural',
-    'olive',
-    'brown',
-    'tan',
-    'gray',
-  ];
-
-  const isBright = brightColors.includes(color);
-
-  const isNatural = naturalColors.includes(color);
+  const colorConfig = FLY_RECOMMENDATION_CONFIG.colors;
+  const scoreConfig = colorConfig.score;
+  const isBright = colorConfig.brightColors.some(value => value === color);
+  const isNatural = colorConfig.naturalColors.some(value => value === color);
 
   if (clarity === 'clear') {
     if (isBright) {
       return {
         color,
-        score: -4,
+        score: scoreConfig.clear.bright,
         reason: 'Bright colors are less natural in clear water',
       };
     }
@@ -193,7 +326,7 @@ function scorePatternColor(
     if (isNatural) {
       return {
         color,
-        score: 3,
+        score: scoreConfig.clear.natural,
         reason: 'Natural colors fit clear-water conditions',
       };
     }
@@ -203,7 +336,7 @@ function scorePatternColor(
     if (isNatural) {
       return {
         color,
-        score: 2,
+        score: scoreConfig.slightlyStained.natural,
         reason: 'Natural colors remain effective in light stain',
       };
     }
@@ -211,7 +344,7 @@ function scorePatternColor(
     if (isBright) {
       return {
         color,
-        score: 1,
+        score: scoreConfig.slightlyStained.bright,
         reason: 'Added visibility can help in lightly stained water',
       };
     }
@@ -221,15 +354,15 @@ function scorePatternColor(
     if (isBright) {
       return {
         color,
-        score: 4,
+        score: scoreConfig.stained.bright,
         reason: 'Bright colors improve visibility in stained water',
       };
     }
 
-    if (color === 'black') {
+    if (color === scoreConfig.highContrastColor) {
       return {
         color,
-        score: 3,
+        score: scoreConfig.stained.black,
         reason: 'Black provides strong contrast in stained water',
       };
     }
@@ -237,7 +370,7 @@ function scorePatternColor(
     if (isNatural) {
       return {
         color,
-        score: 0,
+        score: scoreConfig.stained.natural,
         reason: 'Natural colors are less visible in stained water',
       };
     }
@@ -247,15 +380,15 @@ function scorePatternColor(
     if (isBright) {
       return {
         color,
-        score: 5,
+        score: scoreConfig.highlyStained.bright,
         reason: 'High-visibility colors are favored in heavily stained water',
       };
     }
 
-    if (color === 'black') {
+    if (color === scoreConfig.highContrastColor) {
       return {
         color,
-        score: 4,
+        score: scoreConfig.highlyStained.black,
         reason: 'Black provides a strong silhouette in heavily stained water',
       };
     }
@@ -263,7 +396,7 @@ function scorePatternColor(
     if (isNatural) {
       return {
         color,
-        score: -3,
+        score: scoreConfig.highlyStained.natural,
         reason:
           'Subtle colors may be difficult to see in heavily stained water',
       };
@@ -274,10 +407,13 @@ function scorePatternColor(
    * Recent rain can gently favor bright colors
    * before clarity has fully degraded.
    */
-  if (precipitationLast24Hours >= 0.3 && isBright) {
+  if (
+    precipitationLast24Hours >= scoreConfig.recentRainThreshold &&
+    isBright
+  ) {
     return {
       color,
-      score: 2,
+      score: scoreConfig.recentRainBrightBonus,
       reason: 'Recent rainfall favors a higher-visibility color',
     };
   }
@@ -291,8 +427,8 @@ function scorePatternColor(
 
 export function getTopOptions(
   options: ColorScore[],
-  maxResults = 3,
-  maxGap = 4,
+  maxResults = FLY_RECOMMENDATION_CONFIG.colors.topOptions.maximumResults,
+  maxGap = FLY_RECOMMENDATION_CONFIG.colors.topOptions.maximumScoreGap,
 ): ColorScore[] {
   const sorted = [...options].sort(
     (a, b) => b.score - a.score,
@@ -340,15 +476,16 @@ function getBestPatternColor(
 
   return getTopOptions(
     scores,
-    3,
-    4,
+    FLY_RECOMMENDATION_CONFIG.colors.topOptions.maximumResults,
+    FLY_RECOMMENDATION_CONFIG.colors.topOptions.maximumScoreGap,
   );
 }
 
 export function scoreScud(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 2;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.scud;
+  let score = config.baseScore;
 
   const reasons = [
     'Scuds provide a reliable subsurface food source in suitable waters',
@@ -358,7 +495,7 @@ export function scoreScud(
    * Stronger Midwest bias.
    */
   if (conditions.region === 'upperMidwest') {
-    score += 4;
+    score += config.upperMidwestBonus;
 
     reasons.push(
       'Upper Midwest waters commonly make scud patterns especially useful',
@@ -369,8 +506,8 @@ export function scoreScud(
    * Cool water keeps them relevant much
    * like midges.
    */
-  if (conditions.waterTemperature <= 52) {
-    score += 2;
+  if (conditions.waterTemperature <= config.coolWaterMaximum) {
+    score += config.coolWaterBonus;
 
     reasons.push('Cool water supports consistent subsurface scud activity');
   }
@@ -379,8 +516,11 @@ export function scoreScud(
    * Still useful through moderate
    * temperatures.
    */
-  if (conditions.waterTemperature > 52 && conditions.waterTemperature <= 62) {
-    score += 1;
+  if (
+    conditions.waterTemperature > config.moderateWaterMinimum &&
+    conditions.waterTemperature <= config.moderateWaterMaximum
+  ) {
+    score += config.moderateWaterBonus;
   }
 
   /*
@@ -389,7 +529,7 @@ export function scoreScud(
    * effectively.
    */
   if (conditions.clarity === 'slightlyStained') {
-    score += 1;
+    score += config.slightlyStainedBonus;
   }
 
   /*
@@ -398,12 +538,12 @@ export function scoreScud(
    * and streamers.
    */
   if (conditions.clarity === 'highlyStained') {
-    score -= 2;
+    score -= config.highlyStainedPenalty;
   }
 
   return {
     category: 'scud',
-    score: Math.max(0, score),
+    score: Math.max(FLY_RECOMMENDATION_CONFIG.categories.minimumScore, score),
     reasons,
   };
 }
@@ -411,19 +551,23 @@ export function scoreScud(
 export function scoreAttractorNymph(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 3;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.attractorNymph;
+  let score = config.baseScore;
   const reasons = ['Attractor nymphs provide a versatile subsurface option'];
 
   if (conditions.clarity === 'slightlyStained') {
-    score += 2;
+    score += config.slightlyStainedBonus;
   }
 
   if (conditions.clarity === 'stained') {
-    score += 1;
+    score += config.stainedBonus;
   }
 
-  if (conditions.waterTemperature >= 45 && conditions.waterTemperature <= 65) {
-    score += 1;
+  if (
+    conditions.waterTemperature >= config.suitableWaterMinimum &&
+    conditions.waterTemperature <= config.suitableWaterMaximum
+  ) {
+    score += config.suitableWaterBonus;
   }
 
   return {
@@ -436,21 +580,22 @@ export function scoreAttractorNymph(
 export function scoreStreamer(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 1;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.streamer;
+  let score = config.baseScore;
   const reasons: string[] = [];
 
   if (conditions.clarity === 'stained') {
-    score += 4;
+    score += config.stainedBonus;
 
     reasons.push('Stained water favors larger high-contrast presentations');
   }
 
   if (conditions.clarity === 'slightlyStained') {
-    score += 2;
+    score += config.slightlyStainedBonus;
   }
 
-  if (conditions.cloudCover >= 60) {
-    score += 2;
+  if (conditions.cloudCover >= config.cloudCoverMinimum) {
+    score += config.cloudCoverBonus;
 
     reasons.push('Cloud cover can encourage aggressive streamer activity');
   }
@@ -459,7 +604,7 @@ export function scoreStreamer(
     conditions.pressurePhase === 'falling' ||
     conditions.pressurePhase === 'rapidlyFalling'
   ) {
-    score += 2;
+    score += config.fallingPressureBonus;
 
     reasons.push('Falling pressure may increase aggressive feeding');
   }
@@ -474,24 +619,30 @@ export function scoreStreamer(
 export function scoreTerrestrial(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 0;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.terrestrial;
+  let score = config.baseScore;
   const reasons: string[] = [];
 
-  if (conditions.season === 'lateSummer' || conditions.season === 'earlyFall') {
-    score += 6;
+  if (
+    config.favorableSeasons.some(season => season === conditions.season)
+  ) {
+    score += config.favorableSeasonBonus;
 
     reasons.push('Late-summer and early-fall conditions favor terrestrials');
   }
 
-  if (conditions.waterTemperature >= 55 && conditions.waterTemperature <= 65) {
-    score += 2;
+  if (
+    conditions.waterTemperature >= config.suitableWaterMinimum &&
+    conditions.waterTemperature <= config.suitableWaterMaximum
+  ) {
+    score += config.suitableWaterBonus;
   }
 
   if (
     conditions.clarity === 'clear' ||
     conditions.clarity === 'slightlyStained'
   ) {
-    score += 1;
+    score += config.clearWaterBonus;
   }
 
   return {
@@ -504,24 +655,25 @@ export function scoreTerrestrial(
 export function scoreStonefly(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 0;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.stonefly;
+  let score = config.baseScore;
   const reasons: string[] = [];
 
-  if (
-    conditions.season === 'lateSpring' ||
-    conditions.season === 'earlySummer'
-  ) {
-    score += 5;
+  if (config.favorableSeasons.some(season => season === conditions.season)) {
+    score += config.favorableSeasonBonus;
 
     reasons.push('Late spring and early summer favor stonefly activity');
   }
 
-  if (conditions.waterTemperature >= 48 && conditions.waterTemperature <= 62) {
-    score += 2;
+  if (
+    conditions.waterTemperature >= config.suitableWaterMinimum &&
+    conditions.waterTemperature <= config.suitableWaterMaximum
+  ) {
+    score += config.suitableWaterBonus;
   }
 
   if (conditions.clarity === 'slightlyStained') {
-    score += 1;
+    score += config.slightlyStainedBonus;
   }
 
   return {
@@ -534,28 +686,28 @@ export function scoreStonefly(
 export function scoreCaddis(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 0;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.caddis;
+  let score = config.baseScore;
   const reasons: string[] = [];
 
-  if (
-    conditions.season === 'lateSpring' ||
-    conditions.season === 'earlySummer' ||
-    conditions.season === 'lateSummer'
-  ) {
-    score += 5;
+  if (config.favorableSeasons.some(season => season === conditions.season)) {
+    score += config.favorableSeasonBonus;
 
     reasons.push('Warm-season conditions favor caddis activity');
   }
 
-  if (conditions.waterTemperature >= 52 && conditions.waterTemperature <= 65) {
-    score += 2;
+  if (
+    conditions.waterTemperature >= config.suitableWaterMinimum &&
+    conditions.waterTemperature <= config.suitableWaterMaximum
+  ) {
+    score += config.suitableWaterBonus;
   }
 
   if (
     conditions.clarity === 'clear' ||
     conditions.clarity === 'slightlyStained'
   ) {
-    score += 1;
+    score += config.clearWaterBonus;
   }
 
   return {
@@ -568,24 +720,28 @@ export function scoreCaddis(
 export function scorePMD(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 0;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.pmd;
+  let score = config.baseScore;
   const reasons: string[] = [];
 
-  if (
-    conditions.season === 'lateSpring' ||
-    conditions.season === 'earlySummer'
-  ) {
-    score += 6;
+  if (config.favorableSeasons.some(season => season === conditions.season)) {
+    score += config.favorableSeasonBonus;
 
     reasons.push('Seasonal timing favors PMD activity');
   }
 
-  if (conditions.waterTemperature >= 50 && conditions.waterTemperature <= 62) {
-    score += 2;
+  if (
+    conditions.waterTemperature >= config.suitableWaterMinimum &&
+    conditions.waterTemperature <= config.suitableWaterMaximum
+  ) {
+    score += config.suitableWaterBonus;
   }
 
-  if (conditions.cloudCover >= 30 && conditions.cloudCover <= 80) {
-    score += 1;
+  if (
+    conditions.cloudCover >= config.cloudCoverMinimum &&
+    conditions.cloudCover <= config.cloudCoverMaximum
+  ) {
+    score += config.cloudCoverBonus;
   }
 
   return {
@@ -598,21 +754,18 @@ export function scorePMD(
 export function scoreMidge(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 2;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.midge;
+  let score = config.baseScore;
   const reasons = ['Midges remain available throughout the year'];
 
-  if (
-    conditions.season === 'winter' ||
-    conditions.season === 'earlySpring' ||
-    conditions.season === 'lateFall'
-  ) {
-    score += 5;
+  if (config.favorableSeasons.some(season => season === conditions.season)) {
+    score += config.favorableSeasonBonus;
 
     reasons.push('Cool-season conditions favor midge activity');
   }
 
-  if (conditions.waterTemperature <= 50) {
-    score += 2;
+  if (conditions.waterTemperature <= config.coolWaterMaximum) {
+    score += config.coolWaterBonus;
 
     reasons.push('Cold water increases the value of midge patterns');
   }
@@ -627,27 +780,27 @@ export function scoreMidge(
 export function scoreBWO(
   conditions: FlyRecommendationConditions,
 ): CategoryScore {
-  let score = 0;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.bwo;
+  let score = config.baseScore;
   const reasons: string[] = [];
 
-  if (
-    conditions.season === 'earlySpring' ||
-    conditions.season === 'earlyFall' ||
-    conditions.season === 'lateFall'
-  ) {
-    score += 5;
+  if (config.favorableSeasons.some(season => season === conditions.season)) {
+    score += config.favorableSeasonBonus;
 
     reasons.push('Seasonal timing favors BWO activity');
   }
 
-  if (conditions.waterTemperature >= 45 && conditions.waterTemperature <= 58) {
-    score += 2;
+  if (
+    conditions.waterTemperature >= config.suitableWaterMinimum &&
+    conditions.waterTemperature <= config.suitableWaterMaximum
+  ) {
+    score += config.suitableWaterBonus;
 
     reasons.push('Cool water temperatures support BWO activity');
   }
 
-  if (conditions.cloudCover >= 60) {
-    score += 3;
+  if (conditions.cloudCover >= config.cloudCoverMinimum) {
+    score += config.cloudCoverBonus;
 
     reasons.push('Cloud cover can improve mayfly activity');
   }
@@ -660,12 +813,13 @@ export function scoreBWO(
 }
 
 function scoreWorm(conditions: FlyRecommendationConditions) {
-  let score = 0;
+  const config = FLY_RECOMMENDATION_CONFIG.categories.worm;
+  let score = config.baseScore;
 
   const reasons: string[] = [];
 
-  if (conditions.precipitationLast24Hours >= 0.2) {
-    score += 5;
+  if (conditions.precipitationLast24Hours >= config.rainyDayMinimum) {
+    score += config.recentRainBonus;
 
     reasons.push('Recent rainfall increases the value of worm patterns');
   }
@@ -674,13 +828,13 @@ function scoreWorm(conditions: FlyRecommendationConditions) {
     conditions.clarity === 'stained' ||
     conditions.clarity === 'highlyStained'
   ) {
-    score += 4;
+    score += config.stainedWaterBonus;
 
     reasons.push('Stained water favors high-visibility subsurface patterns');
   }
 
   if (conditions.clarity === 'slightlyStained') {
-    score += 2;
+    score += config.slightlyStainedBonus;
   }
 
   return {
@@ -701,7 +855,9 @@ export function getColorRecommendation(
    */
   if (clarity === 'highlyStained') {
     return {
-      preferredColors: ['pink', 'orange', 'chartreuse', 'red', 'black'],
+      preferredColors: [
+        ...FLY_RECOMMENDATION_CONFIG.colors.preferredColors.highlyStained,
+      ],
 
       visibility: 'high',
 
@@ -716,7 +872,7 @@ export function getColorRecommendation(
    */
   if (clarity === 'stained') {
     return {
-      preferredColors: ['pink', 'orange', 'red', 'black'],
+      preferredColors: [...FLY_RECOMMENDATION_CONFIG.colors.preferredColors.stained],
 
       visibility: 'high',
 
@@ -729,9 +885,14 @@ export function getColorRecommendation(
    * brighter options even before the water
    * becomes strongly stained.
    */
-  if (precipitationLast24Hours >= 0.3) {
+  if (
+    precipitationLast24Hours >=
+    FLY_RECOMMENDATION_CONFIG.colors.score.recentRainThreshold
+  ) {
     return {
-      preferredColors: ['pink', 'orange', 'natural', 'olive'],
+      preferredColors: [
+        ...FLY_RECOMMENDATION_CONFIG.colors.preferredColors.recentRain,
+      ],
 
       visibility: 'moderate',
 
@@ -743,7 +904,9 @@ export function getColorRecommendation(
 
   if (clarity === 'slightlyStained') {
     return {
-      preferredColors: ['olive', 'brown', 'tan', 'black', 'natural'],
+      preferredColors: [
+        ...FLY_RECOMMENDATION_CONFIG.colors.preferredColors.slightlyStained,
+      ],
 
       visibility: 'moderate',
 
@@ -752,7 +915,7 @@ export function getColorRecommendation(
   }
 
   return {
-    preferredColors: ['natural', 'olive', 'brown', 'tan', 'black'],
+    preferredColors: [...FLY_RECOMMENDATION_CONFIG.colors.preferredColors.clear],
 
     visibility: 'natural',
 

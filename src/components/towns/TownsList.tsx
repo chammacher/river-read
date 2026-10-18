@@ -10,6 +10,7 @@ import { CachedTownWeatherMap } from '../../context/WeatherContext';
 interface TownsListProps {
   towns: Station[];
   weather: CachedTownWeatherMap;
+  weatherLoading: boolean;
   onRemove(townId: string): void;
   onPressTown(town: Station): void;
 }
@@ -18,6 +19,7 @@ export function TownsList({
   towns,
   onPressTown,
   weather,
+  weatherLoading,
 }: TownsListProps) {
   return (
     <View className="px-4 pb-24">
@@ -28,6 +30,7 @@ export function TownsList({
             key={town.id}
             town={town}
             weather={weather.get(town.id)}
+            weatherLoading={weatherLoading}
             onPress={selectedTown => {
               onPressTown(selectedTown);
             }}

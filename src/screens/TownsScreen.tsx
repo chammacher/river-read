@@ -15,6 +15,7 @@ import { Header } from '../components/layout/Header';
 import { TownsList } from '../components/towns/TownsList';
 import { EmptyTownsState } from '../components/towns/EmptyTownsState';
 import { AddTownDrawer } from '../components/towns/AddDrawer';
+import { getWeatherAgeMinutes } from '../functions/func';
 
 export function TownsScreen() {
   const { towns, isLoading, error, addTown, removeTown } = useTowns();
@@ -22,9 +23,32 @@ export function TownsScreen() {
     weatherMap,
     refreshWeather,
     isRefreshing,
+    isLoading: weatherLoading,
+    isCacheLoaded,
   } = useWeather();
   const [showAddTown, setShowAddTown] = useState(false);
   const navigation = useNavigation<TownsScreenNavigationProp>();
+  const oldestWeatherUpdate = towns.reduce<string | undefined>(
+    (oldest, town) => {
+      const cached = weatherMap.get(town.id);
+      if (!cached) {
+        return oldest;
+      }
+
+      if (!oldest || Date.parse(cached.lastUpdated) < Date.parse(oldest)) {
+        return cached.lastUpdated;
+      }
+
+      return oldest;
+    },
+    undefined,
+  );
+  const lastUpdatedLabel = oldestWeatherUpdate
+    ? `Updated ${getWeatherAgeMinutes(oldestWeatherUpdate)}m ago`
+    : !isCacheLoaded || weatherLoading
+      ? 'Loading weather'
+      : 'Weather not updated yet';
+
   if (isLoading) {
     return <Text>Loading...</Text>;
   }
@@ -41,6 +65,8 @@ export function TownsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
+              title={lastUpdatedLabel}
+              titleColor="#406840"
               onRefresh={() => refreshWeather(true)}
             />
           }
@@ -49,9 +75,14 @@ export function TownsScreen() {
             <Text className="text-3xl font-semibold text-primary">
               My Towns
             </Text>
-            <Text className="mt-1 text-sm text-on-surface-variant">
-              {towns.length} Monitored Stations
-            </Text>
+            <View className="mt-1 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <Text className="text-sm text-on-surface-variant">
+                {towns.length} Monitored Stations
+              </Text>
+              <Text className="text-xs text-on-surface-variant">
+                {lastUpdatedLabel}
+              </Text>
+            </View>
           </View>
           {towns.length === 0 ? (
             <EmptyTownsState
@@ -64,6 +95,7 @@ export function TownsScreen() {
             <TownsList
               towns={towns}
               weather={weatherMap}
+              weatherLoading={!isCacheLoaded || weatherLoading}
               onRemove={townId => removeTown(townId)}
               onPressTown={town => {
                 navigation.navigate('TownDetails', {

@@ -14,7 +14,9 @@ import { fetchTownWeather } from '../api/weather';
 import { useTowns } from './TownsContext';
 import { loadWeatherCache, saveWeatherCache } from '../storage/weatherStorage';
 import { isWeatherStale } from '../functions/func';
-import type { CachedTownWeather } from '../types/weather';
+import { deriveTownWeather } from '../functions/deriveTownWeather';
+import { mergeRawTownWeather } from '../functions/weatherData';
+import type { CachedTownWeather, RawTownWeather } from '../types/weather';
 
 export type CachedTownWeatherMap = Map<string, CachedTownWeather>;
 
@@ -116,7 +118,7 @@ export function WeatherProvider({ children }: PropsWithChildren) {
               return true;
             }
 
-            return isWeatherStale(cached.lastUpdated);
+            return !cached.source || isWeatherStale(cached.lastUpdated);
           });
 
       if (townsToRefresh.length === 0) {
@@ -127,18 +129,42 @@ export function WeatherProvider({ children }: PropsWithChildren) {
       setError(null);
 
       try {
-        const fetchedWeather = await fetchTownWeather(townsToRefresh);
+        const cachedSources = new Map<string, RawTownWeather>();
+        townsToRefresh.forEach(town => {
+          const source = weatherMap.get(town.id)?.source;
+          if (source) {
+            cachedSources.set(town.id, source);
+          }
+        });
+        const fetchedWeather = await fetchTownWeather(
+          townsToRefresh,
+          cachedSources,
+        );
+        const now = new Date();
+        const refreshedWeather = new Map<string, CachedTownWeather>();
 
-        const now = new Date().toISOString();
+        fetchedWeather.forEach((updates, townId) => {
+          const town = townsToRefresh.find(item => item.id === townId);
+          if (!town) {
+            return;
+          }
+
+          const source = mergeRawTownWeather(
+            weatherMap.get(townId)?.source,
+            updates,
+          );
+          refreshedWeather.set(townId, {
+            source,
+            data: deriveTownWeather(source, town, now),
+            lastUpdated: now.toISOString(),
+          });
+        });
 
         setWeatherMap(current => {
           const updated = new Map(current);
 
-          fetchedWeather.forEach((weather, townId) => {
-            updated.set(townId, {
-              data: weather,
-              lastUpdated: now,
-            });
+          refreshedWeather.forEach((weather, townId) => {
+            updated.set(townId, weather);
           });
 
           return updated;

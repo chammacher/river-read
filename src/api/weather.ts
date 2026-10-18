@@ -2,30 +2,12 @@
 
 import type { Station } from '../types/station';
 import type {
-  TownWeather,
-  TownWeatherMap,
+  RawCurrentWeather,
+  RawDailyWeather,
+  RawHourlyWeather,
+  RawTownWeather,
+  RawTownWeatherMap,
 } from '../types/weather';
-import { stateCodes } from '../types/states';
-
-import {
-  estimateWaterTemperature,
-  estimateWaterTemperatureRange,
-  estimateHourlyWaterTemperatures,
-  calculateBiteScore,
-  findOptimalBiteWindow,
-  calculatePrecipitationSummary,
-  estimateWaterClarity,
-  getHoursSinceRain,
-  getPressureBaseline,
-  getPressureTrend,
-} from '../functions/weatherFunc';
-import { calculateDailyFishingScore } from '../functions/fishScore';
-import { FlyRecommendationConditions } from '../types/fly';
-import {
-  getFishingRegion,
-  getFishingSeason,
-  recommendFlyPatterns,
-} from '../functions/flyRecommendations';
 
 interface OpenMeteoCurrent {
   time: string;
@@ -60,60 +42,169 @@ interface OpenMeteoHourly {
 }
 
 interface OpenMeteoResponse {
-  current: OpenMeteoCurrent;
-  daily: OpenMeteoDaily;
-  hourly: OpenMeteoHourly;
+  timezone: string;
+  current?: OpenMeteoCurrent;
+  daily?: OpenMeteoDaily;
+  hourly?: OpenMeteoHourly;
 }
+
+interface NormalizedWeatherResponse {
+  timezone: string;
+  current?: RawCurrentWeather;
+  hourly: RawHourlyWeather[];
+  daily: RawDailyWeather[];
+}
+
+const CURRENT_VARIABLES = [
+  'temperature_2m',
+  'apparent_temperature',
+  'relative_humidity_2m',
+  'precipitation',
+  'cloud_cover',
+  'pressure_msl',
+  'wind_speed_10m',
+  'weather_code',
+].join(',');
+
+const HOURLY_VARIABLES = [
+  'temperature_2m',
+  'precipitation',
+  'pressure_msl',
+].join(',');
+
+const DAILY_VARIABLES = [
+  'temperature_2m_max',
+  'temperature_2m_min',
+  'temperature_2m_mean',
+  'precipitation_sum',
+  'weather_code',
+  'cloud_cover_mean',
+  'pressure_msl_mean',
+  'sunrise',
+  'sunset',
+].join(',');
 
 export async function fetchTownWeather(
   towns: Station[],
-): Promise<TownWeatherMap> {
+  cachedWeather: ReadonlyMap<string, RawTownWeather> = new Map(),
+): Promise<RawTownWeatherMap> {
   if (towns.length === 0) {
     return new Map();
   }
 
-  const latitudes = towns.map(town => town.latitude).join(',');
+  const weatherEntries = await Promise.all(
+    towns.map(async town => {
+      const cached = cachedWeather.get(town.id);
+      const weather = cached
+        ? await fetchIncrementalWeather(town, cached)
+        : await fetchBootstrapWeather(town);
 
-  const longitudes = towns.map(town => town.longitude).join(',');
+      return [town.id, weather] as const;
+    }),
+  );
 
-  const params = new URLSearchParams({
-    latitude: latitudes,
-    longitude: longitudes,
+  return new Map(weatherEntries);
+}
 
-    current: [
-      'temperature_2m',
-      'apparent_temperature',
-      'relative_humidity_2m',
-      'precipitation',
-      'cloud_cover',
-      'pressure_msl',
-      'wind_speed_10m',
-      'weather_code',
-    ].join(','),
+async function fetchBootstrapWeather(town: Station): Promise<RawTownWeather> {
+  const params = createBaseParams(town);
+  params.set('current', CURRENT_VARIABLES);
+  params.set('hourly', HOURLY_VARIABLES);
+  params.set('daily', DAILY_VARIABLES);
+  params.set('past_days', '7');
+  params.set('forecast_days', '7');
+  params.set('past_hours', '24');
+  params.set('forecast_hours', '48');
 
-    hourly: ['temperature_2m', 'precipitation', 'pressure_msl'].join(','),
+  const response = normalizeResponse(await fetchOpenMeteo(params));
 
-    daily: [
-      'temperature_2m_max',
-      'temperature_2m_min',
-      'temperature_2m_mean',
-      'precipitation_sum',
-      'weather_code',
-      'cloud_cover_mean',
-      'pressure_msl_mean',
-      'sunrise',
-      'sunset',
-    ].join(','),
+  if (!response.current) {
+    throw new Error('Weather response did not include current conditions');
+  }
 
-    past_days: '7',
-    forecast_days: '7',
+  return {
+    ...response,
+    current: response.current,
+  };
+}
 
+async function fetchIncrementalWeather(
+  town: Station,
+  cached: RawTownWeather,
+): Promise<RawTownWeather> {
+  const latestParams = createBaseParams(town);
+  latestParams.set('current', CURRENT_VARIABLES);
+  latestParams.set('hourly', HOURLY_VARIABLES);
+  latestParams.set('past_hours', '2');
+  latestParams.set('forecast_hours', '1');
+
+  const latest = normalizeResponse(await fetchOpenMeteo(latestParams));
+  if (!latest.current) {
+    throw new Error('Weather response did not include current conditions');
+  }
+  const currentHour = latest.current.time.slice(0, 13);
+  const latestObservedHour = latest.hourly
+    .filter(hour => hour.time.slice(0, 13) <= currentHour)
+    .slice(-1);
+
+  const currentDate = latest.current.time.slice(0, 10);
+  const latestCachedHour = cached.hourly.at(-1)?.time;
+  const nextHour = latestCachedHour
+    ? shiftLocalHour(latestCachedHour, 1)
+    : undefined;
+  const lastCachedDate = cached.daily.at(-1)?.date;
+  const nextDate = lastCachedDate ? shiftLocalDate(lastCachedDate, 1) : undefined;
+  const hourlyEnd = shiftLocalHour(latest.current.time, 48);
+  const dailyEnd = shiftLocalDate(currentDate, 6);
+  const hasNewHourly = Boolean(nextHour && nextHour <= hourlyEnd);
+  const hasNewDaily = Boolean(nextDate && nextDate <= dailyEnd);
+  let hourly: RawHourlyWeather[] = [];
+  let daily: RawDailyWeather[] = [];
+  let timezone = latest.timezone;
+
+  if (hasNewHourly || hasNewDaily) {
+    const params = createBaseParams(town);
+
+    if (hasNewHourly && nextHour) {
+      params.set('hourly', HOURLY_VARIABLES);
+      params.set('start_hour', nextHour);
+      params.set('end_hour', hourlyEnd);
+    }
+
+    if (hasNewDaily && nextDate) {
+      params.set('daily', DAILY_VARIABLES);
+      params.set('start_date', nextDate);
+      params.set('end_date', dailyEnd);
+    }
+
+    const additions = normalizeResponse(await fetchOpenMeteo(params));
+    hourly = additions.hourly;
+    daily = additions.daily;
+    timezone = additions.timezone;
+  }
+
+  return {
+    timezone,
+    current: latest.current,
+    hourly: latestObservedHour.concat(hourly),
+    daily,
+  };
+}
+
+function createBaseParams(town: Station): URLSearchParams {
+  return new URLSearchParams({
+    latitude: String(town.latitude),
+    longitude: String(town.longitude),
     temperature_unit: 'fahrenheit',
     wind_speed_unit: 'mph',
     precipitation_unit: 'inch',
     timezone: 'auto',
   });
+}
 
+async function fetchOpenMeteo(
+  params: URLSearchParams,
+): Promise<OpenMeteoResponse> {
   const response = await fetch(
     `https://api.open-meteo.com/v1/forecast?${params}`,
   );
@@ -122,181 +213,66 @@ export async function fetchTownWeather(
     throw new Error(`Weather request failed: ${response.status}`);
   }
 
-  const data: OpenMeteoResponse | OpenMeteoResponse[] = await response.json();
+  return response.json();
+}
 
-  /*
-   * Open-Meteo returns an object for one location
-   * and an array for multiple locations.
-   */
-  const results = Array.isArray(data) ? data : [data];
-  const weatherMap = new Map<string, TownWeather>();
+function normalizeResponse(
+  response: OpenMeteoResponse,
+): NormalizedWeatherResponse {
+  const currentData = response.current;
+  const hourlyData = response.hourly;
+  const dailyData = response.daily;
+  const current: RawCurrentWeather | undefined = currentData
+    ? {
+        time: currentData.time,
+        temperature: currentData.temperature_2m,
+        apparentTemperature: currentData.apparent_temperature,
+        humidity: currentData.relative_humidity_2m,
+        precipitation: currentData.precipitation,
+        cloudCover: currentData.cloud_cover,
+        pressure: currentData.pressure_msl,
+        windSpeed: currentData.wind_speed_10m,
+        weatherCode: currentData.weather_code,
+      }
+    : undefined;
+  const hourly = hourlyData?.time.map((time, index) => ({
+    time,
+    temperature: hourlyData.temperature_2m[index],
+    precipitation: hourlyData.precipitation[index],
+    pressure: hourlyData.pressure_msl[index],
+  })) ?? [];
+  const daily = dailyData?.time.map((date, index) => ({
+    date,
+    temperatureMax: dailyData.temperature_2m_max[index],
+    temperatureMin: dailyData.temperature_2m_min[index],
+    temperatureMean: dailyData.temperature_2m_mean[index],
+    precipitation: dailyData.precipitation_sum[index],
+    weatherCode: dailyData.weather_code[index],
+    cloudCoverMean: dailyData.cloud_cover_mean[index],
+    pressureMean: dailyData.pressure_msl_mean[index],
+    sunrise: dailyData.sunrise[index],
+    sunset: dailyData.sunset[index],
+  })) ?? [];
 
-  results.forEach((result, index) => {
-    const town = towns[index];
+  return {
+    timezone: response.timezone,
+    current,
+    hourly,
+    daily,
+  };
+}
 
-    if (!town) {
-      return;
-    }
-    const now = result.current.time.split('T');
-    const today = now[0];
-    const hour: number = Number(now[1].split(':')[0]);
-    const daily = result.daily.time.map((date, dayIndex) => ({
-      date,
+function shiftLocalHour(time: string, hours: number): string {
+  const [date, hour] = time.slice(0, 13).split('T');
+  const [year, month, day] = date.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day, Number(hour) + hours));
 
-      temperatureMax: result.daily.temperature_2m_max[dayIndex],
+  return `${shifted.toISOString().slice(0, 13)}:00`;
+}
 
-      temperatureMin: result.daily.temperature_2m_min[dayIndex],
+function shiftLocalDate(date: string, days: number): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
 
-      temperatureMean: result.daily.temperature_2m_mean[dayIndex],
-
-      precipitation: result.daily.precipitation_sum[dayIndex],
-
-      weatherCode: result.daily.weather_code[dayIndex],
-
-      cloudCoverMean: result.daily.cloud_cover_mean[dayIndex],
-
-      pressureMean: result.daily.pressure_msl_mean[dayIndex],
-
-      sunrise: result.daily.sunrise[dayIndex],
-
-      sunset: result.daily.sunset[dayIndex],
-    }));
-
-    // run calculations here to generate a score and deeper metrics
-    const recentAirTemps = daily.slice(-7).map(day => day.temperatureMean);
-    const estimatedWaterTemp = estimateWaterTemperature(recentAirTemps);
-    // water temp spread
-    const waterTemps = estimateWaterTemperatureRange(
-      estimatedWaterTemp,
-      daily[daily.length / 2].temperatureMin,
-      daily[daily.length / 2].temperatureMax,
-    );
-
-    // bite window range
-    const todayHourlyIndexes: { time: string; hourlyIndex: number }[] =
-      result.hourly.time
-        .map((time, hourlyIndex) => ({
-          time,
-          hourlyIndex,
-        }))
-        .filter(({ time }) => time.startsWith(today));
-    const hourlyAirTemps = todayHourlyIndexes.map(
-      ({ hourlyIndex }) => result.hourly.temperature_2m[hourlyIndex],
-    );
-
-    const hourlyRain = todayHourlyIndexes.map(
-      ({ hourlyIndex }) => result.hourly.precipitation[hourlyIndex],
-    );
-    const hourlyPressure = todayHourlyIndexes.map(
-      ({ hourlyIndex }) => result.hourly.pressure_msl[hourlyIndex],
-    );
-    const hourlyWaterTemps = estimateHourlyWaterTemperatures(
-      hourlyAirTemps,
-      waterTemps.min,
-      waterTemps.max,
-    );
-
-    const previousPressureDays = daily
-      .filter(day => day.date < today)
-      .slice(-3)
-      .map(day => day.pressureMean);
-    const pressureBaseline = getPressureBaseline(previousPressureDays);
-
-    const hourly = todayHourlyIndexes.map(({ time }, hourlyIndex) => {
-      const waterTemp = hourlyWaterTemps[hourlyIndex];
-
-      const previousIndex = Math.max(0, hourlyIndex - 3);
-
-      const threeHourChange = waterTemp - hourlyWaterTemps[previousIndex];
-
-      const hourlyHour: number = Number(time.substring(11, 13));
-      return {
-        time,
-        hour: hourlyHour,
-
-        airTemperature: hourlyAirTemps[hourlyIndex],
-        precipitation: hourlyRain[hourlyIndex],
-        pressure: hourlyPressure[hourlyIndex],
-        estimatedWaterTemperature: waterTemp,
-
-        biteScore: calculateBiteScore(waterTemp, threeHourChange),
-      };
-    });
-
-    const precipitation = calculatePrecipitationSummary(
-      hourly,
-      daily,
-      result.current.time,
-    );
-    const hoursSinceRain = getHoursSinceRain(hourly, hour);
-    const waterClarity = estimateWaterClarity({
-      ...precipitation,
-      hoursSinceRain,
-    });
-
-    const pressureTrend = getPressureTrend(hourly, index, pressureBaseline.average);
-
-    const biteWindow = findOptimalBiteWindow(
-      hourly,
-      daily[daily.length / 2].sunrise,
-      daily[daily.length / 2].sunset,
-    );
-    // fish score
-    const fishingScore = calculateDailyFishingScore({
-      pressurePhase: pressureTrend.phase,
-
-      month: new Date().getMonth() + 1,
-
-      waterTemperature: estimatedWaterTemp,
-
-      clarity: waterClarity.river,
-
-      cloudCover: result.current.cloud_cover,
-    });
-    const flyConditions: FlyRecommendationConditions = {
-      region: getFishingRegion(stateCodes[town.state]),
-
-      season: getFishingSeason(today),
-
-      waterTemperature: estimatedWaterTemp || 55,
-
-      clarity: waterClarity.river,
-
-      cloudCover: result.current.cloud_cover,
-
-      pressurePhase: pressureTrend.phase,
-
-      precipitationLast24Hours: precipitation.last24Hours,
-    };
-    const flyRecommendations = recommendFlyPatterns(flyConditions);
-    weatherMap.set(town.id, {
-      current: {
-        time: result.current.time,
-        sunrise: daily[daily.length / 2].sunrise,
-        sunset: daily[daily.length / 2].sunset,
-        temperature: result.current.temperature_2m,
-        apparentTemperature: result.current.apparent_temperature,
-        humidity: result.current.relative_humidity_2m,
-        precipitation: result.current.precipitation,
-        cloudCover: result.current.cloud_cover,
-        windSpeed: result.current.wind_speed_10m,
-        weatherCode: result.current.weather_code,
-        waterTemp: estimatedWaterTemp,
-        waterTempMin: waterTemps.min,
-        waterTempMax: waterTemps.max,
-        biteWindow,
-        last24Hours: precipitation.last24Hours,
-        last7Days: precipitation.last7Days,
-        next48Hours: precipitation.next48Hours,
-        clarity: waterClarity,
-        pressure: pressureTrend,
-        score: fishingScore,
-        flyRecommendations,
-      },
-      hourly,
-      daily,
-    });
-  });
-
-  return weatherMap;
+  return shifted.toISOString().slice(0, 10);
 }
