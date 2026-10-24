@@ -9,7 +9,7 @@ import { BottomDrawer } from '../drawer/BottomDrawer';
 import { FieldNote } from './FieldNote';
 import { fieldNotes } from '../../types/notes';
 import { StationResultCard } from './StationResultsCard';
-import { TownSuggestionChip } from './TownSuggestionChip';
+// import { TownSuggestionChip } from './TownSuggestionChip';
 
 import { Station } from '../../types/station';
 
@@ -18,14 +18,6 @@ interface AddTownDrawerProps {
   onClose: () => void;
   onAddTown: (station: Station) => void;
 }
-
-const popularTowns = [
-  'Island Park, ID',
-  'Jackson, WY',
-  'Ennis, MT',
-  'Craig, MT',
-  'Twin Bridges, MT',
-];
 
 export function AddTownDrawer({
   visible,
@@ -59,11 +51,11 @@ export function AddTownDrawer({
     return () => clearTimeout(timeout);
   }, [query]);
 
-  const handleSuggestionPress = (label: string) => {
-    const town = label.split(',')[0];
+//   const handleSuggestionPress = (label: string) => {
+//     const town = label.split(',')[0];
 
-    setQuery(town);
-  };
+//     setQuery(town);
+//   };
   return (
     <BottomDrawer visible={visible} onClose={onClose}>
       {/* Header */}
@@ -167,7 +159,7 @@ export function AddTownDrawer({
         </View>
 
         {/* Popular */}
-        <View className="gap-2">
+        {/* <View className="gap-2">
           <View className="flex-row items-center justify-between">
             <Text className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
               Frequently Monitored Fly Hubs
@@ -183,7 +175,7 @@ export function AddTownDrawer({
               />
             ))}
           </View>
-        </View>
+        </View> */}
 
         <View className="mt-6">
           <FieldNote

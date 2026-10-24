@@ -734,7 +734,7 @@ export const clarityPhrase = {
   highlyStained: 'Low Visibility',
   stained: 'Limited Visibility',
   slightlyStained: 'Moderate Visibility',
-  clear: 'Gin Clear Sightline',
+  clear: 'Clear Sightline',
 };
 
 export interface PressureBaseline {
